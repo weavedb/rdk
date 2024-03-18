@@ -1,19 +1,6 @@
 # WeaveDB Rollup Development Kit
 
-```
- __          __                  _____  ____    _____       _ _             
- \ \        / /                 |  __ \|  _ \  |  __ \     | | |            
-  \ \  /\  / /__  __ ___   _____| |  | | |_) | | |__) |___ | | |_   _ _ __  
-   \ \/  \/ / _ \/ _` \ \ / / _ \ |  | |  _ <  |  _  // _ \| | | | | | '_ \ 
-    \  /\  /  __/ (_| |\ V /  __/ |__| | |_) | | | \ \ (_) | | | |_| | |_) |
-     \/  \/ \___|\__,_| \_/ \___|_____/|____/  |_|  \_\___/|_|_|\__,_| .__/ 
-                                                                     | |    
-                                                                     |_|    
-```
-
-# Rollup Node
-
-<div style="text-align:center;"><img src="./assets/architecuture.png" /></div>
+![](./assets/architecuture.png)
 
 ## How Rollup Works
 
