@@ -27,7 +27,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 const {
   dbname = null,
   port = 9090,
-  config = "./weavedb.standalone.config.js",
+  config = "./weavedb.config.js",
 } = require("yargs")(process.argv.slice(2)).argv
 const weavedb = grpc.loadPackageDefinition(packageDefinition).weavedb
 const path = require("path")
@@ -55,7 +55,7 @@ class Rollup {
   }) {
     this.cb = {}
     this.txid = txid
-    this.db = fork(path.resolve(__dirname, "rollup-mp"))
+    this.db = fork(path.resolve(__dirname, "rollup"))
     this.db.on("message", async ({ err, result, op, id }) => {
       if (!isNil(id)) {
         await this.cb[id]?.(err, result)
@@ -137,7 +137,7 @@ class Server {
   async init() {
     const admin_db = this.getRollup(
       { secure: true, plugins: {}, owner: this.admin.address.toLowerCase() },
-      "__admin__"
+      "__admin__",
     )
     admin_db.init(async () => {
       const auth = { privateKey: this.conf.admin }
@@ -150,7 +150,7 @@ class Server {
           },
         },
         "dbs",
-        auth
+        auth,
       )
       console.log(`__admin__ rules added: ${tx.success}`)
       const rollups = this.conf.rollups || { offchain: {} }
@@ -179,10 +179,10 @@ class Server {
       () => {
         addReflection(
           server,
-          path.resolve(__dirname, "./static_codegen/descriptor_set.bin")
+          path.resolve(__dirname, "./static_codegen/descriptor_set.bin"),
         )
         server.start()
-      }
+      },
     )
     console.log(`server ready on ${this.port}!`)
   }
@@ -331,10 +331,10 @@ class Server {
                     { contractTxId: res.contractTxId, rollup: true },
                     "dbs",
                     key,
-                    auth
+                    auth,
                   )
                   console.log(
-                    `contract deployed: ${res.contractTxId} [${key}:${tx.success}]`
+                    `contract deployed: ${res.contractTxId} [${key}:${tx.success}]`,
                   )
                   callback(null, {
                     result: JSON.stringify(res),
@@ -346,7 +346,7 @@ class Server {
                     ++this.count,
                     () => {
                       console.log(`contract initialized! ${res.contractTxId}`)
-                    }
+                    },
                   )
                 }
               }

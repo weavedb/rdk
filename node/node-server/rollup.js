@@ -29,7 +29,7 @@ const getId = async (contractTxId, input, timestamp) => {
   })
 
   return arweave.utils.bufferTob64Url(
-    await arweave.crypto.hash(arweave.utils.stringToBuffer(str))
+    await arweave.crypto.hash(arweave.utils.stringToBuffer(str)),
   )
 }
 
@@ -37,10 +37,10 @@ const getHash = async ids => {
   return arweave.utils.bufferTob64(
     await arweave.crypto.hash(
       arweave.utils.concatBuffers(
-        map(v2 => arweave.utils.stringToBuffer(v2))(ids)
+        map(v2 => arweave.utils.stringToBuffer(v2))(ids),
       ),
-      "SHA-384"
-    )
+      "SHA-384",
+    ),
   )
 }
 
@@ -95,12 +95,12 @@ class Rollup {
     this.dir = path.resolve(
       dir ?? path.resolve(__dirname, "cache"),
       dbname,
-      this.txid
+      this.txid,
     )
     this.dir_backup = path.resolve(
       backup ?? path.resolve(__dirname, "backup"),
       dbname,
-      this.txid
+      this.txid,
     )
     this.plugins = plugins
   }
@@ -150,16 +150,16 @@ class Rollup {
             "txs",
             ["commit"],
             ["id"],
-            ["commit", "==", false]
+            ["commit", "==", false],
           )
           if (bundling.length > 0) {
             const b = (await this.measureSizes(bundling, this.last_hash)).slice(
               0,
-              10
+              10,
             )
             this.cb[++this.count] = (
               _err,
-              { err, results, success, state }
+              { err, results, success, state },
             ) => {
               _res({
                 state,
@@ -212,7 +212,7 @@ class Rollup {
         console.log(
           `valid: ${valids[v.tx.originalTxId]} : [${v.height}] : ${
             v.tx.originalTxId
-          }`
+          }`,
         )
         if (v.height > valid_height) {
           console.log(`commit not valid ${v.height} > ${valid_height}`)
@@ -234,7 +234,7 @@ class Rollup {
             "txs",
             v2.id,
           ],
-          v.items.bundles
+          v.items.bundles,
         )
         batch.push([
           "set",
@@ -265,7 +265,7 @@ class Rollup {
     this.error_count = 0
     this.cb[++this.count] = (
       err,
-      { partial_recovery, full_recovery, full_recovery_failure, success }
+      { partial_recovery, full_recovery, full_recovery_failure, success },
     ) => {
       if (err) {
         console.log(`warp recovery unsuccessful... ${this.contractTxId}`)
@@ -369,10 +369,10 @@ class Rollup {
                     .split("")
                     .map(function (c) {
                       return c.charCodeAt(0)
-                    })
+                    }),
                 )
                 const query = JSON.parse(
-                  pako.inflate(compressed, { to: "string" })
+                  pako.inflate(compressed, { to: "string" }),
                 )
                 let ids = []
                 for (let [i, input] of query.q.entries()) {
@@ -396,7 +396,7 @@ class Rollup {
             undefined,
             undefined,
             undefined,
-            block_time
+            block_time,
           )
           if (tx?.success) {
             const validities = await l1.getValidities(tx.originalTxId)
@@ -419,7 +419,7 @@ class Rollup {
                     undefined,
                     undefined,
                     undefined,
-                    input.t
+                    input.t,
                   )
                 }
               }
@@ -435,7 +435,7 @@ class Rollup {
                   hash: b.h,
                 },
                 "blocks",
-                k
+                k,
               )
             }
           }
@@ -456,7 +456,7 @@ class Rollup {
   }
   async initSyncer() {
     if (!isNil(this.syncer)) this.syncer.kill()
-    this.syncer = fork(path.resolve(__dirname, "warp-mp"))
+    this.syncer = fork(path.resolve(__dirname, "warp"))
     this.syncer.on("message", async ({ err, result, id }) => {
       if (!isNil(id)) {
         await this.cb[id]?.(err, result)
@@ -541,7 +541,7 @@ class Rollup {
     this.height = last_block[0]?.height ?? 0
     this.last_hash = last_block[0]?.hash ?? this.contractTxId
     console.log(
-      `${this.tx_count} txs has been cached: ${this.height} blocks commited`
+      `${this.tx_count} txs has been cached: ${this.height} blocks commited`,
     )
   }
 
@@ -632,7 +632,7 @@ class Rollup {
     const _query = JSON.parse(query)
     const key = DB.getKeyInfo(
       type,
-      !isNil(_query.query) ? _query : { function: func, query: _query }
+      !isNil(_query.query) ? _query : { function: func, query: _query },
     )
     let data = null
     let result, err, dryWrite
@@ -650,8 +650,8 @@ class Rollup {
       type === "log"
         ? this.wal
         : type === "offchain"
-        ? this.db
-        : this.plugins[type]?.db?.pdb
+          ? this.db
+          : this.plugins[type]?.db?.pdb
     if (isNil(db)) res("DB not found", null)
     try {
       let _query = query === `""` ? [] : JSON.parse(query)
@@ -705,8 +705,8 @@ class Rollup {
         typeof e === "string"
           ? e
           : typeof e.message === "string"
-          ? e.message
-          : "unknown error"
+            ? e.message
+            : "unknown error"
     }
     return { result, err, dryWrite }
   }

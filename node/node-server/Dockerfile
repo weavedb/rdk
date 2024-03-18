@@ -8,4 +8,4 @@ RUN yarn
 
 EXPOSE 9090
 
-CMD ["yarn", "pm2", "start", "standalone-mp.js", "--no-daemon"]
+CMD ["yarn", "pm2", "start", "server.js", "--no-daemon"]
