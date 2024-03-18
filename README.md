@@ -19,9 +19,9 @@
 
 Install `docker` and `docker-compose` globally to your machine. And open port `8080` for anyone.
 
-### weavedb.standalone.config.js
+### weavedb.config.js
 
-Create `weavedb.standalone.config.js` in `/grpc-node/node-server` directory.  
+Create `weavedb.config.js` in `/grpc-node/node-server` directory.  
 
 #### The minimum requirements
 
@@ -36,7 +36,7 @@ The bundler will pay for rollup transactions and receive rewards from PoS in the
   - `plugins` : add offchain plugins, plugin scripts have to be placed in `/grpc-node/node-server/plugins` with the same name.
   - `rollup` : a bloolean value to enable rollup to Arweave/Warp
 
-```js title="/grpc-node/node-server/weavedb.standalone.config.js"
+```js title="/grpc-node/node-server/weavedb.config.js"
 module.exports = {
   admin: EVM_PRIVATE_KEY,
   bundler: ARWEAVE_RSA_KEYS,
@@ -54,7 +54,7 @@ module.exports = {
 
 With everything included,
 
-```js title="/grpc-node/node-server/weavedb.standalone.config.js"
+```js title="/grpc-node/node-server/weavedb.config.js"
 module.exports = {
   dir: "/home/xyz/cache",
   dbname: "mydb",
