@@ -53,7 +53,7 @@ const unwrapDER = (derEncoded, oid) => {
   const result = buf.slice(offset)
   if (payloadLen !== result.length) {
     throw new Error(
-      `DER payload mismatch: Expected length ${payloadLen} actual length ${result.length}`
+      `DER payload mismatch: Expected length ${payloadLen} actual length ${result.length}`,
     )
   }
   return result
@@ -61,7 +61,7 @@ const unwrapDER = (derEncoded, oid) => {
 
 function fromHexString(hexString) {
   return new Uint8Array(
-    (hexString.match(/.{1,2}/g) ?? []).map(byte => parseInt(byte, 16))
+    (hexString.match(/.{1,2}/g) ?? []).map(byte => parseInt(byte, 16)),
   ).buffer
 }
 
@@ -78,7 +78,7 @@ const verifyII = async (data, signature, signer) => {
       sign.detached.verify(
         new Uint8Array(Buffer.from(JSON.stringify(data))),
         new Uint8Array(fromHexString(signature)),
-        new Uint8Array(unwrapDER(fromHexString(signer), ED25519_OID).buffer)
+        new Uint8Array(unwrapDER(fromHexString(signer), ED25519_OID).buffer),
       )
     ) {
       isValid = true
