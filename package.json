@@ -4,6 +4,6 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "run-rollup": "cd grpc-node && sudo docker-compose -f docker-compose-standalone.yml up --build"
+    "run-rollup": "cd node && sudo docker-compose -f docker-compose.yml up --build"
   }
 }

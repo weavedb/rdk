@@ -3,7 +3,6 @@ services:
   node-server:
     build:
       context: ./node-server
-      dockerfile: standalone.Dockerfile
     ports:
       - "9090:9090"
       - "4736:4736"
