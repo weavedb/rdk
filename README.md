@@ -112,7 +112,7 @@ const tx = await db.admin(
     db: {
       app: "http://localhost:3000", // this will be shown on the explorer
       name: "Jots", // this will be shown on the explorer
-      rollup: false,
+      rollup: true,
       plugins: { notifications: {} },
       tick: 1000 * 60 * 5,
     },
@@ -166,6 +166,12 @@ We currently have only one plugin for [Jots](https://weavedb.vercel.app/docs/get
 
 ## Local Development Tips
 
+### Clone Repo
+
+```bash
+git clone https://github.com/weavedb/rdk.git
+```
+
 ### Explorer
 
 If you are running the rollup node on `localhost:8080`, you can view blocks and transactions on our public [WeaveDB Scan](https://scan.weavedb.dev/node/localhost).
@@ -173,7 +179,7 @@ If you are running the rollup node on `localhost:8080`, you can view blocks and 
 However, the public explorer may not be up-to-date. To run the latest explorer, go to `explorer` folder.
 
 ```bash
-cd explorer
+cd rdk/explorer
 yarn
 yarn dev
 ```
@@ -195,16 +201,16 @@ sudo docker pull envoyproxy/envoy:dev-975807fae441e910eec126756f1c183ca1694893
 Then run the container with `envoy-local.yaml` located in the envoy directory in this repo.
 
 ```bash
-cd node/envoy
+cd rdk/node/envoy
 sudo docker run --rm -it -v $(pwd)/envoy-local.yaml:/envoy.yaml --network host -p 8080:8080 envoyproxy/envoy:dev-975807fae441e910eec126756f1c183ca1694893 -c envoy.yaml
 ```
 
 Then you can run the rollup server without Docker.
 
 ```bash
-cd node/node-server
+cd rdk/node/node-server
 yarn
-node server.js
+node index.js
 ```
 
 ### Arweave Local Testnet
@@ -264,16 +270,16 @@ describe("rollup node", function () {
   })
 
   it("should start server", async () => {
-    const db = new DB({
-      rpc: "localhost:9090",
-    })
+    const db = new DB({ rpc: "localhost:9090" })
     const stats = await db.node({ op: "stats" })
     expect(stats).to.eql({ dbs: [] })
   })
 })
 ```
 
+Run the tests.
+
 ```bash
-cd node/node-server
+cd rdk/node/node-server
 yarn test
 ```

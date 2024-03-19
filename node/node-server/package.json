@@ -34,8 +34,9 @@
     "redis": "^4.6.4",
     "tweetnacl": "^1.0.3",
     "warp-arbundles": "^1.0.4",
-    "warp-contracts": "^1.4.19",
-    "weavedb-node-client": "^0.39.0",
+    "warp-contracts": "1.4.1",
+    "warp-contracts-plugin-deploy": "1.0.3",
+    "weavedb-node-client": "^0.39.2",
     "weavedb-offchain": "^0.39.0",
     "weavedb-sdk-node": "^0.39.0",
     "weavedb-warp-contracts-plugin-deploy": "^1.0.10",
@@ -43,6 +44,7 @@
     "yargs": "^17.6.2"
   },
   "devDependencies": {
+    "arlocal": "^1.1.65",
     "node-dev": "^8.0.0",
     "prettier": "2.8.3"
   }
