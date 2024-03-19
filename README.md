@@ -167,3 +167,32 @@ We currently have only one plugin for [Jots](https://weavedb.vercel.app/docs/get
 ### Explorer
 
 If you are running the rollup node on `localhost:8080`, you can view blocks and transactions on our public [WeaveDB Scan](https://scan.weavedb.dev/node/localhost).
+
+
+### Local Development Tips
+
+#### Run without Docker
+
+You can install & run Envoy separately on your computer, and run the bare rollup file `server.js` without Docker. This way, you don't have to restart docker-compose every time you make changes in development.
+
+To do so, first install envoy to your computer. Note, the easiest way is to use Docker for Envoy.
+
+```bash
+sudo docker pull envoyproxy/envoy:dev-975807fae441e910eec126756f1c183ca1694893
+```
+
+- [Other ways to install Envoy](https://www.envoyproxy.io/docs/envoy/latest/start/install#install-envoy-using-docker)
+
+Then run the container with `envoy-local.yaml` located in the envoy directory in this repo.
+
+```bash
+cd node/envoy
+sudo docker run --rm -it -v $(pwd)/envoy-local.yaml:/envoy.yaml --network host -p 8080:8080 envoyproxy/envoy:dev-975807fae441e910eec126756f1c183ca1694893 -c envoy.yaml
+```
+
+Then you can run the rollup server without Docker.
+
+```bash
+cd node/node-server
+node server.js
+```
