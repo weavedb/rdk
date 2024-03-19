@@ -16,6 +16,7 @@ const {
   mapObjIndexed,
   is,
 } = require("ramda")
+
 const { privateToAddress } = require("ethereumjs-util")
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
@@ -24,11 +25,6 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   defaults: true,
   oneofs: true,
 })
-const {
-  dbname = null,
-  port = 9090,
-  config = "./weavedb.config.js",
-} = require("yargs")(process.argv.slice(2)).argv
 const weavedb = grpc.loadPackageDefinition(packageDefinition).weavedb
 const path = require("path")
 const { fork } = require("child_process")
@@ -102,9 +98,9 @@ class Rollup {
 }
 
 class Server {
-  constructor({ port = 9090 }) {
+  constructor({ port = 9090, dbname, conf }) {
     this.count = 0
-    this.conf = require(config)
+    this.conf = conf
     if (!isNil(dbname)) this.conf.dbname = dbname
     // TODO: more prisice validations
     if (!isNil(this.bundler)) throw Error("bundler is not defined")
@@ -505,9 +501,7 @@ class Server {
   }
 }
 
-const server = new Server({ port })
-
-if (!isNil(server.conf.nostr)) {
-  const { nostr } = require("./nostr")
-  nostr({ server, port: server.conf.nostr.port, db: server.conf.nostr.db })
+module.exports = {
+  Server,
+  Rollup,
 }

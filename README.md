@@ -206,3 +206,14 @@ cd node/node-server
 yarn
 node server.js
 ```
+
+### Arweave Local Testnet
+
+To test rollup executions in your local environment, you can run [arlocal](https://github.com/textury/arlocal) (Arweave local testnet), and redirect WeaveDB SDK / Warp SDK to it.
+
+### Test
+
+```bash
+cd node/node-server
+yarn test
+```
