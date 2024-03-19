@@ -164,14 +164,23 @@ const db_info = await db.getInfo()
 
 We currently have only one plugin for [Jots](https://weavedb.vercel.app/docs/get-started/jots#write-db-configurations) called `notifications` which generates personal notifications from onchain Jots activities. The notification DB will be an offchain WeaveDB instance, which won't be recorded onchain. Not every data should be onchain, and offchain plugins solve the problem. WeaveDB can seamlessly run in multiple environment such as blockchain, offchain (local), browser and centralized cloud.
 
+## Local Development Tips
+
 ### Explorer
 
 If you are running the rollup node on `localhost:8080`, you can view blocks and transactions on our public [WeaveDB Scan](https://scan.weavedb.dev/node/localhost).
 
+However, the public explorer may not be up-to-date. To run the latest explorer, go to `explorer` folder.
 
-### Local Development Tips
+```bash
+cd explorer
+yarn
+yarn dev
+```
 
-#### Run without Docker
+Now the explorer is running locally at [localhost:3000/node/localhost](http://localhost:3000/node/localhost).
+
+### Run without Docker
 
 You can install & run Envoy separately on your computer, and run the bare rollup file `server.js` without Docker. This way, you don't have to restart docker-compose every time you make changes in development.
 
@@ -194,5 +203,6 @@ Then you can run the rollup server without Docker.
 
 ```bash
 cd node/node-server
+yarn
 node server.js
 ```
