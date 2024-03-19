@@ -67,8 +67,10 @@ class Rollup {
     initial_state = {},
     bundler,
     contractTxId,
+    arweave,
   }) {
     this.cb = {}
+    this.arweave = arweave
     this.recovering = false
     this.count = 0
     this.height = 0
@@ -478,6 +480,7 @@ class Rollup {
       id: this.count,
       op: "init",
       opt: {
+        arweave: this.arweave,
         contractTxId: this.contractTxId,
         bundler: this.bundler,
         dir: this.dir,

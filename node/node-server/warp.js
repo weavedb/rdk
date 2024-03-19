@@ -6,7 +6,19 @@ const pako = require("pako")
 const md5 = require("md5")
 
 class Syncer {
-  constructor({ contractTxId, bundler, dir, backup, dir_backup }) {
+  constructor({
+    contractTxId,
+    bundler,
+    dir,
+    backup,
+    dir_backup,
+    arweave = {
+      host: "arweave.net",
+      port: 443,
+      protocol: "https",
+    },
+  }) {
+    this.arweave = arweave
     this.partial_recovery = false
     this.full_recovery = false
     this.full_recovery_failure = false
@@ -19,6 +31,7 @@ class Syncer {
   async init() {
     console.log(`contractTxId: ${this.contractTxId}`)
     this.warp = new Warp({
+      arweave: this.arweave,
       logLevel: "none",
       lmdb: { dir: path.resolve(this.dir, "warp") },
       type: 3,
@@ -27,7 +40,7 @@ class Syncer {
       nocache: true,
       progress: async input => {
         console.log(
-          `loading ${this.contractTxId} [${input.currentInteraction}/${input.allInteractions}]`
+          `loading ${this.contractTxId} [${input.currentInteraction}/${input.allInteractions}]`,
         )
       },
     })
@@ -41,7 +54,7 @@ class Syncer {
   async commit(v, height) {
     const { bundles, t, hash } = v
     console.log(
-      `[${height}],commiting to Warp...${map(_path(["data", "id"]))(bundles)}`
+      `[${height}],commiting to Warp...${map(_path(["data", "id"]))(bundles)}`,
     )
     const res = await this.warp.bundle(map(_path(["data", "input"]))(bundles), {
       t,
@@ -133,7 +146,7 @@ class Syncer {
             path.resolve(this.dir_backup, "warp"),
             {
               recursive: true,
-            }
+            },
           )
         } catch (e) {
           console.log(e)
@@ -168,7 +181,7 @@ class Syncer {
 
           {
             recursive: true,
-          }
+          },
         )
       } catch (e) {
         console.log(e)

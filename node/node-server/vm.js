@@ -36,6 +36,7 @@ class Rollup {
     contractTxId,
     rollup,
     initial_state = {},
+    arweave,
   }) {
     this.cb = {}
     this.txid = txid
@@ -52,6 +53,7 @@ class Rollup {
     this.db.send({
       op: "new",
       params: {
+        arweave,
         txid,
         secure,
         owner,
@@ -103,6 +105,7 @@ class VM {
   }
   getRollup(v, txid) {
     return new Rollup({
+      arweave: this.conf.arweave,
       txid,
       secure: v.secure ?? this.conf.secure,
       owner: v.owner ?? this.conf.owner,
@@ -226,13 +229,18 @@ class VM {
                 return
               } else {
                 const tx_deploy = { success: false }
-                const warp = WarpFactory.forMainnet().use(new DeployPlugin())
-                const srcTxId = "Ohr4AU6jRUCLoNSTTqu3bZ8GulKZ0V8gUm-vwrRbmS4"
+                const warp =
+                  this.conf.arweave?.host === "localhost"
+                    ? WarpFactory.forLocal().use(new DeployPlugin())
+                    : WarpFactory.forMainnet().use(new DeployPlugin())
+                const srcTxId =
+                  this.conf.weavedb_srcTxId ??
+                  "Ohr4AU6jRUCLoNSTTqu3bZ8GulKZ0V8gUm-vwrRbmS4"
                 let res = null
                 let err = null
                 try {
                   let initialState = {
-                    version: "0.37.2",
+                    version: this.conf.weavedb_version ?? "0.37.2",
                     canEvolve: true,
                     evolve: null,
                     secure: true,
@@ -254,23 +262,27 @@ class VM {
                     contracts: {},
                     triggers: {},
                   }
-                  const arweave = Arweave.init({
+                  const _arweave = this.conf.arweave ?? {
                     host: "arweave.net",
                     port: 443,
                     protocol: "https",
-                  })
+                  }
+                  const arweave = Arweave.init(_arweave)
                   initialState.owner = _db.owner
                   initialState.bundlers = [
                     await arweave.wallets.jwkToAddress(this.conf.bundler),
                   ]
-                  initialState.contracts = {
+                  initialState.contracts = this.conf.contracts ?? {
                     dfinity: "3OnjOPuWzB138LOiNxqq2cKby2yANw6RWcQVEkztXX8",
                     ethereum: "Awwzwvw7qfc58cKS8cG3NsPdDet957-Bf-S1RcHry0w",
                     bundler: "lry5KMRj6j13sLHsKxs1D2joLjcj6yNHtNQQQoaHRug",
                     nostr: "PDuTzRpn99EwiUvT9XrUhg8nyhW20Wcd-XcRXboCpHs",
                   }
                   res = await warp.createContract.deployFromSourceTx({
-                    wallet: new ArweaveSigner(this.conf.bundler),
+                    wallet:
+                      _arweave.host === "localhost"
+                        ? this.conf.bundler
+                        : new ArweaveSigner(this.conf.bundler),
                     initState: JSON.stringify(initialState),
                     srcTxId,
                     evaluationManifest: {
@@ -345,6 +357,7 @@ class VM {
             const tx = await this.admin_db.set(db, "dbs", key, auth)
             if (tx.success) {
               this.rollups[key] = new Rollup({
+                arweave: this.conf.arweave,
                 txid: key,
                 secure: db.secure ?? this.conf.secure,
                 owner: db.owner ?? this.conf.owner,
@@ -432,6 +445,7 @@ class VM {
       callback(null, { result: null, err: "unknown error" })
     }
   }
+
   parseQueryNostr(query, id = "offchain", callback) {
     const res = (err, result = null) => {
       callback(null, {
@@ -455,10 +469,12 @@ class VM {
       isAdmin: query.function === "admin",
     }
   }
+
   async execAdmin({ query, res }) {
     res(null, await this.admin_db.get("dbs"))
     return
   }
+
   async queryNostr(call, id = "offchain", callback) {
     const parsed = this.parseQueryNostr(call, id, callback)
     const { type, res, nocache, txid, func, query, isAdmin } = parsed
@@ -468,6 +484,7 @@ class VM {
     }
     this.rollups[txid].execUser(parsed, ++this.count)
   }
+
   async stop() {
     this.admin_db.rollup.db.kill()
     for (const k in this.rollups) this.rollups[k].db.kill()
