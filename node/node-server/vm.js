@@ -468,6 +468,10 @@ class VM {
     }
     this.rollups[txid].execUser(parsed, ++this.count)
   }
+  async stop() {
+    this.admin_db.rollup.db.kill()
+    for (const k in this.rollups) this.rollups[k].db.kill()
+  }
 }
 
 module.exports = {
