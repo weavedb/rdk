@@ -5,12 +5,12 @@ const { wait, Test } = require("./lib/utils")
 
 describe("rollup node", function () {
   this.timeout(0)
-  let arweave, admin, network, bundler, test
+  let admin, network, bundler, test
 
   before(async () => {
     // testing in insecure mode, never do that in production
     test = new Test({ secure: false })
-    ;({ network, arweave, bundler, admin } = await test.start())
+    ;({ network, bundler, admin } = await test.start())
   })
 
   after(async () => {
@@ -24,7 +24,7 @@ describe("rollup node", function () {
     const db = new DB({
       rpc: "localhost:9090",
       contractTxId: "testdb",
-      arweave,
+      arweave: network,
     })
     const stats = await db.node({ op: "stats" })
     expect(stats).to.eql({ dbs: [] })
