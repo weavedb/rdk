@@ -1,138 +1,22 @@
-const EthCrypto = require("eth-crypto")
-const Arweave = require("arweave")
-const ArLocal = require("arlocal").default
-const { rmSync } = require("fs")
-const { resolve } = require("path")
 const { expect } = require("chai")
 const DB = require("weavedb-node-client")
 const SDK = require("weavedb-sdk-node")
-const { VM } = require("../vm")
-const { Server } = require("../server")
-const { DeployPlugin } = require("warp-contracts-plugin-deploy")
-const { LoggerFactory, WarpFactory } = require("warp-contracts")
-const wait = ms => new Promise(res => setTimeout(() => res(), ms))
-const { readFileSync } = require("fs")
-const { join } = require("path")
-
-async function addFunds(arweave, wallet) {
-  const walletAddress = await arweave.wallets.getAddress(wallet)
-  await arweave.api.get(`/mint/${walletAddress}/1000000000000000`)
-}
-
-class Deploy {
-  constructor({ warp, wallet }) {
-    this.warp = warp
-    this.wallet = wallet
-  }
-  async deploy({ tar, ver = "0.0.1", init = {} }) {
-    const dir = join(__dirname, "../contracts", tar)
-    const src = readFileSync(join(dir, `${ver}.js`), "utf8")
-    const state = JSON.parse(
-      readFileSync(join(dir, "initial-state.json"), "utf8"),
-    )
-    const initState = JSON.stringify({
-      ...state,
-      ...{ owner: this.wallet.address },
-    })
-    return await this.warp.createContract.deploy({
-      wallet: this.wallet,
-      initState,
-      src,
-    })
-  }
-  async weavedb({ ver }) {
-    this.dfinity = await this.deploy({ tar: "dfinity" })
-    this.ethereum = await this.deploy({ tar: "ethereum" })
-    this.bundler = await this.deploy({ tar: "bundler" })
-    this.nostr = await this.deploy({ tar: "nostr" })
-    this.weavedb = await this.deploy({
-      tar: "weavedb",
-      ver,
-      init: {
-        dfinity: this.dfinity.contractTxId,
-        ethereum: this.ethereum.contractTxId,
-        bundler: this.bundler.contractTxId,
-        nostr: this.nostr.contractTxId,
-      },
-    })
-    return this.weavedb
-  }
-  get contracts() {
-    return {
-      dfinity: this.dfinity.contractTxId,
-      ethereum: this.ethereum.contractTxId,
-      bundler: this.bundler.contractTxId,
-      nostr: this.nostr.contractTxId,
-    }
-  }
-}
+const { wait, Test } = require("./lib/utils")
 
 describe("rollup node", function () {
   this.timeout(0)
-  let vm,
-    server,
-    admin,
-    bundler,
-    conf,
-    dbname,
-    arLocal,
-    arweave,
-    _arweave,
-    weavedb_srcTxId,
-    contracts
+  let arweave, admin, network, bundler, test
 
   before(async () => {
-    LoggerFactory.INST.logLevel("error")
-    dbname = `test-${Math.floor(Math.random() * 1000)}`
-    _arweave = {
-      host: "localhost",
-      port: 1984,
-      protocol: "http",
-    }
-    arweave = Arweave.init(_arweave)
-    bundler = await arweave.wallets.generate()
-    admin = EthCrypto.createIdentity()
-    arLocal = new ArLocal(1984, false)
-    await arLocal.start()
-    await wait(1000)
-    await addFunds(arweave, bundler)
-    const warp = WarpFactory.forLocal()
-    warp.use(new DeployPlugin())
-    const deploy = new Deploy({ warp, wallet: bundler })
-    const weavedb = await deploy.weavedb({ ver: "0.37.2" })
-    contracts = deploy.contracts
-    weavedb_srcTxId = weavedb.srcTxId
-    conf = {
-      secure: false,
-      weavedb_srcTxId,
-      arweave: _arweave,
-      dbname,
-      admin: admin.privateKey,
-      bundler,
-      rollups: {},
-      contracts,
-    }
-    vm = new VM({ conf })
-    server = new Server({ query: vm.query.bind(vm) })
-    await wait(1000)
+    // testing in insecure mode, never do that in production
+    test = new Test({ secure: false })
+    ;({ network, arweave, bundler, admin } = await test.start())
   })
 
   after(async () => {
-    server.server.forceShutdown()
-    await vm.stop()
-    await arLocal.stop()
-    try {
-      rmSync(resolve(__dirname, "../cache", dbname), {
-        recursive: true,
-        force: true,
-      })
-    } catch (e) {}
-    try {
-      rmSync(resolve(__dirname, "../backup", dbname), {
-        recursive: true,
-        force: true,
-      })
-    } catch (e) {}
+    await test.stop()
+
+    // some processes linger, so force exit for now
     process.exit()
   })
 
@@ -162,7 +46,7 @@ describe("rollup node", function () {
     expect(tx.success).to.eql(true)
     await wait(2000)
 
-    // deploy L1 contract (via node)
+    // deploy L2 warp contract (via node)
     const { contractTxId, srcTxId } = await db.admin(
       { op: "deploy_contract", key: "testdb" },
       { privateKey: admin.privateKey },
@@ -170,14 +54,14 @@ describe("rollup node", function () {
     expect((await db.node({ op: "stats" })).dbs[0].data.rollup).to.eql(true)
     await wait(2000)
 
-    // check L1 contract info directly with SDK (not via node)
-    const l1_db = new SDK({
+    // check L2 warp contract info directly with SDK (not via node)
+    const warp_db = new SDK({
       type: 3,
       contractTxId,
-      arweave: _arweave,
+      arweave: network,
     })
-    await l1_db.init()
-    expect((await l1_db.getInfo()).version).to.eql("0.37.2")
+    await warp_db.init()
+    expect((await warp_db.getInfo()).version).to.eql("0.37.2")
 
     // update the DB (via node)
     const db2 = new DB({
@@ -193,11 +77,11 @@ describe("rollup node", function () {
 
     // check rollup
     await wait(5000)
-    expect((await l1_db.db.readState()).cachedValue.state.rollup.height).to.eql(
-      1,
-    )
+    expect(
+      (await warp_db.db.readState()).cachedValue.state.rollup.height,
+    ).to.eql(1)
 
     // check if L2 Warp state is the same as L3 DB state
-    expect(await l1_db.get("ppl", "Bob")).to.eql(Bob)
+    expect(await warp_db.get("ppl", "Bob")).to.eql(Bob)
   })
 })

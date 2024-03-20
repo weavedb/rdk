@@ -48,6 +48,9 @@ module.exports = {
 
 - `dir` : cache dirctory, default to `/grpc-node/node-server/cache`.
 - `dbname` : cache database name, cache will be stored in `dir/dbname`.
+- `arweave` : arweave network configuration
+- `weavedb_srcTxId` : WeaveDB contract srcTxId
+- `weavedb_version` : WeaveDB contract version
 - `nostr` : enable WebSocket for Nostr, this turns the node into a Nostr relay.
   - `db` : the database name for Nostr events, there can be only one DB instance to receive Nostr events.
 
@@ -59,6 +62,13 @@ module.exports = {
   dir: "/home/xyz/cache",
   dbname: "mydb",
   admin: "privateky...",
+  arweave: {
+    host: "arweave.net",
+    port: 443,
+    protocol: "https",
+  },
+  weavedb_srcTxId: "Ohr4AU6jRUCLoNSTTqu3bZ8GulKZ0V8gUm-vwrRbmS4",
+  weavedb_version: "0.37.2",
   bundler: {
     kty: "RSA",
 	...
@@ -221,58 +231,94 @@ To test rollup executions in your local environment, you can run [arlocal](https
 
 You don't need to run Envoy for local tests. Envoy is to access the node from web browsers. Also, stop arlocal if you are running test scripts with [mocha](https://mochajs.org/). The test scripts will start everything with a clean state.
 
-Here is some boilerplate for you to start writing tests.
+We have `Test` helper utility, to make testing easier. Here is some boilerplate for you to start writing tests.
 
 ```javascript
-const EthCrypto = require("eth-crypto")
-const Arweave = require("arweave")
-const { rmSync } = require("fs")
-const { resolve } = require("path")
 const { expect } = require("chai")
 const DB = require("weavedb-node-client")
-
-const { VM } = require("../vm")
-const { Server } = require("../server")
-
-const sleep = ms => new Promise(res => setTimeout(() => res(), ms))
+const SDK = require("weavedb-sdk-node")
+const { wait, Test } = require("./lib/utils")
 
 describe("rollup node", function () {
   this.timeout(0)
-  let vm, server, admin, bundler, conf, dbname
+  let arweave, admin, network, bundler, test
 
   before(async () => {
-    dbname = `test-${Math.floor(Math.random() * 1000)}`
-    const arweave = Arweave.init()
-    bundler = await arweave.wallets.generate()
-    admin = EthCrypto.createIdentity()
-    conf = { dbname, admin: admin.privateKey, bundler, rollups: {} }
-    vm = new VM({ conf })
-    server = new Server({ query: vm.query.bind(vm) })
-    await sleep(1000)
+    // testing in insecure mode, never do that in production
+    test = new Test({ secure: false })
+    ;({ network, arweave, bundler, admin } = await test.start())
   })
 
   after(async () => {
-    server.server.forceShutdown()
-    await vm.stop()
-    try {
-      rmSync(resolve(__dirname, "../cache", dbname), {
-        recursive: true,
-        force: true,
-      })
-    } catch (e) {}
-    try {
-      rmSync(resolve(__dirname, "../backup", dbname), {
-        recursive: true,
-        force: true,
-      })
-    } catch (e) {}
+    await test.stop()
+
+    // some processes linger, so force exit for now
     process.exit()
   })
 
   it("should start server", async () => {
-    const db = new DB({ rpc: "localhost:9090" })
+    const db = new DB({
+      rpc: "localhost:9090",
+      contractTxId: "testdb",
+      arweave,
+    })
     const stats = await db.node({ op: "stats" })
     expect(stats).to.eql({ dbs: [] })
+
+    // add a DB to node
+    const tx = await db.admin(
+      {
+        op: "add_db",
+        key: "testdb",
+        db: {
+          app: "http://localhost:3000",
+          name: "Jots",
+          rollup: true,
+          owner: admin.address,
+        },
+      },
+      { privateKey: admin.privateKey },
+    )
+    expect(tx.success).to.eql(true)
+    await wait(2000)
+
+    // deploy L2 warp contract (via node)
+    const { contractTxId, srcTxId } = await db.admin(
+      { op: "deploy_contract", key: "testdb" },
+      { privateKey: admin.privateKey },
+    )
+    expect((await db.node({ op: "stats" })).dbs[0].data.rollup).to.eql(true)
+    await wait(2000)
+
+    // check L2 warp contract info directly with SDK (not via node)
+    const warp_db = new SDK({
+      type: 3,
+      contractTxId,
+      arweave: network,
+    })
+    await warp_db.init()
+    expect((await warp_db.getInfo()).version).to.eql("0.37.2")
+
+    // update the DB (via node)
+    const db2 = new DB({
+      rpc: "localhost:9090",
+      contractTxId,
+    })
+    const Bob = { name: "Bob" }
+    const tx2 = await db2.set(Bob, "ppl", "Bob", {
+      privateKey: admin.privateKey,
+    })
+    expect(tx2.success).to.eql(true)
+    expect(await db2.get("ppl", "Bob")).to.eql(Bob)
+
+    // check rollup
+    await wait(5000)
+    expect(
+      (await warp_db.db.readState()).cachedValue.state.rollup.height,
+    ).to.eql(1)
+
+    // check if L2 Warp state is the same as L3 DB state
+    expect(await warp_db.get("ppl", "Bob")).to.eql(Bob)
   })
 })
 ```
