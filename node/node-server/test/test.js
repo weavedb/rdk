@@ -46,7 +46,7 @@ describe("rollup node", function () {
     expect(tx.success).to.eql(true)
     await wait(2000)
 
-    // deploy L2 warp contract (via node)
+    // deploy L1 warp contract (via node)
     const { contractTxId, srcTxId } = await db.admin(
       { op: "deploy_contract", key: "testdb" },
       { privateKey: admin.privateKey },
@@ -54,7 +54,7 @@ describe("rollup node", function () {
     expect((await db.node({ op: "stats" })).dbs[0].data.rollup).to.eql(true)
     await wait(2000)
 
-    // check L2 warp contract info directly with SDK (not via node)
+    // check L1 warp contract info directly with SDK (not via node)
     const warp_db = new SDK({
       type: 3,
       contractTxId,
@@ -81,7 +81,7 @@ describe("rollup node", function () {
       (await warp_db.db.readState()).cachedValue.state.rollup.height,
     ).to.eql(1)
 
-    // check if L2 Warp state is the same as L3 DB state
+    // check if L1 Warp state is the same as L2 DB state
     expect(await warp_db.get("ppl", "Bob")).to.eql(Bob)
   })
 })
