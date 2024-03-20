@@ -38,7 +38,7 @@
     "warp-contracts-plugin-deploy": "1.0.3",
     "weavedb-node-client": "^0.39.2",
     "weavedb-offchain": "^0.39.0",
-    "weavedb-sdk-node": "^0.39.0",
+    "weavedb-sdk-node": "^0.39.2",
     "weavedb-warp-contracts-plugin-deploy": "^1.0.10",
     "ws": "^8.14.2",
     "yargs": "^17.6.2"

@@ -103,6 +103,7 @@ describe("rollup node", function () {
     contracts = deploy.contracts
     weavedb_srcTxId = weavedb.srcTxId
     conf = {
+      secure: false,
       weavedb_srcTxId,
       arweave: _arweave,
       dbname,
@@ -144,7 +145,7 @@ describe("rollup node", function () {
     const stats = await db.node({ op: "stats" })
     expect(stats).to.eql({ dbs: [] })
 
-    // add a DB
+    // add a DB to node
     const tx = await db.admin(
       {
         op: "add_db",
@@ -160,17 +161,40 @@ describe("rollup node", function () {
     )
     expect(tx.success).to.eql(true)
     await wait(2000)
+
+    // deploy L1 contract (via node)
     const { contractTxId, srcTxId } = await db.admin(
       { op: "deploy_contract", key: "testdb" },
       { privateKey: admin.privateKey },
     )
     expect((await db.node({ op: "stats" })).dbs[0].data.rollup).to.eql(true)
     await wait(2000)
+
+    // check L1 contract info directly with SDK (not via node)
     const l1_db = new SDK({
+      type: 3,
       contractTxId,
       arweave: _arweave,
     })
     await l1_db.init()
     expect((await l1_db.getInfo()).version).to.eql("0.37.2")
+
+    // update the DB (via node)
+    const db2 = new DB({
+      rpc: "localhost:9090",
+      contractTxId,
+    })
+    const Bob = { name: "Bob" }
+    const tx2 = await db2.set(Bob, "ppl", "Bob", {
+      privateKey: admin.privateKey,
+    })
+    expect(tx2.success).to.eql(true)
+    expect(await db2.get("ppl", "Bob")).to.eql(Bob)
+
+    // check rollup
+    await wait(5000)
+    expect((await l1_db.db.readState()).cachedValue.state.rollup.height).to.eql(
+      1,
+    )
   })
 })
