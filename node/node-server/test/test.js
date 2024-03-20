@@ -196,5 +196,8 @@ describe("rollup node", function () {
     expect((await l1_db.db.readState()).cachedValue.state.rollup.height).to.eql(
       1,
     )
+
+    // check if L2 Warp state is the same as L3 DB state
+    expect(await l1_db.get("ppl", "Bob")).to.eql(Bob)
   })
 })

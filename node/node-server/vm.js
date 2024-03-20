@@ -243,7 +243,7 @@ class VM {
                     version: this.conf.weavedb_version ?? "0.37.2",
                     canEvolve: true,
                     evolve: null,
-                    secure: true,
+                    secure: _db.secure ?? this.conf.secure,
                     auth: {
                       algorithms: [
                         "secp256k1",
