@@ -198,7 +198,7 @@ Now the explorer is running locally at [localhost:3000/node/localhost](http://lo
 
 ### Run Envoy Separately
 
-You run Envoy separately on your computer, and run the bare rollup file `index.js` without Docker. This way, you don't have to restart docker-compose every time you make changes in development.
+You can run Envoy separately on your computer, and run the bare rollup file `index.js` without Docker. This way, you don't have to restart docker-compose every time you make changes in development.
 
 ```bash
 yarn envoy
