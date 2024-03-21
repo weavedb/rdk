@@ -196,23 +196,12 @@ yarn dev
 
 Now the explorer is running locally at [localhost:3000/node/localhost](http://localhost:3000/node/localhost).
 
-### Run without Docker
+### Run Envoy Separately
 
-You can install & run Envoy separately on your computer, and run the bare rollup file `index.js` without Docker. This way, you don't have to restart docker-compose every time you make changes in development.
-
-To do so, first install envoy to your computer. Note, the easiest way is to use Docker for Envoy.
+You run Envoy separately on your computer, and run the bare rollup file `index.js` without Docker. This way, you don't have to restart docker-compose every time you make changes in development.
 
 ```bash
-sudo docker pull envoyproxy/envoy:dev-975807fae441e910eec126756f1c183ca1694893
-```
-
-- [Other ways to install Envoy](https://www.envoyproxy.io/docs/envoy/latest/start/install#install-envoy-using-docker)
-
-Then run the container with `envoy-local.yaml` located in the envoy directory in this repo.
-
-```bash
-cd rdk/node/envoy
-sudo docker run --rm -it -v $(pwd)/envoy-local.yaml:/envoy.yaml --network host -p 8080:8080 envoyproxy/envoy:dev-975807fae441e910eec126756f1c183ca1694893 -c envoy.yaml
+yarn envoy
 ```
 
 Then you can run the rollup server without Docker.
