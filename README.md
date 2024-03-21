@@ -206,7 +206,6 @@ yarn envoy
 
 Then you can run the rollup server without Docker.
 
-
 ```bash
 cd rdk/node/node-server
 yarn
