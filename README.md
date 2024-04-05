@@ -130,6 +130,26 @@ const tx = await db.admin(
   { privateKey: admin.privateKey }
 )
 ```
+You can recover existing db with `contractTxId` after starting a new node.
+
+```js
+const tx = await db.admin(
+  {
+    op: "add_db",
+    key: "testdb2",
+    db: {
+      app: "http://localhost:3000", // this will be shown on the explorer
+      name: "Jots", // this will be shown on the explorer
+      rollup: true,
+      plugins: { notifications: {} },
+      tick: 1000 * 60 * 5,
+	  contractTxId // Warp L1 contract TxId
+    },
+  },
+  { privateKey: admin.privateKey }
+)
+```
+
 #### Deploy Warp L1 Contract
 
 ```js
