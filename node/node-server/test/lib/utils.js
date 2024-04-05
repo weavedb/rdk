@@ -57,38 +57,79 @@ class Deploy {
   }
 }
 
-const wait = ms => new Promise(res => setTimeout(() => res(), ms))
+const wait = ms => {
+  console.log("waiting for...", 1000, "ms")
+  return new Promise(res => setTimeout(() => res(), ms))
+}
 
 class Test {
-  constructor({ secure = true }) {
+  constructor({
+    secure = true,
+    weavedb_version,
+    weavedb_srcTxId,
+    dbname,
+    bundler,
+    admin,
+    network,
+  }) {
+    this.admin = admin
+    this.bundler = bundler
     this.secure = secure
+    this.weavedb_srcTxId = weavedb_srcTxId
+    this.weavedb_version = weavedb_version ?? "0.37.2"
+    this.arLocal_started = false
+    this.network = network ?? {
+      host: "localhost",
+      port: 1984,
+      protocol: "http",
+    }
+
+    this.dbname = dbname ?? `test-${Math.floor(Math.random() * 1000)}`
   }
   async addFunds(wallet, amount = "1000000000000000") {
     const addr = await this.arweave.wallets.getAddress(wallet)
     await this.arweave.api.get(`/mint/${addr}/${amount}`)
   }
-  async start() {
-    this.weavedb_version = "0.37.2"
-    LoggerFactory.INST.logLevel("error")
-    this.dbname = `test-${Math.floor(Math.random() * 1000)}`
-    this.network = {
-      host: "localhost",
-      port: 1984,
-      protocol: "http",
+  async startArLocal() {
+    if (!this.arLocal_started) {
+      LoggerFactory.INST.logLevel("error")
+      this.arweave = Arweave.init(this.network)
+      this.arLocal = new ArLocal(1984, false)
+      await this.arLocal.start()
+      this.arLocal_started = true
+      await wait(1000)
+    } else {
+      console.log("arLocal already started")
     }
-    this.arweave = Arweave.init(this.network)
-    this.bundler = await this.arweave.wallets.generate()
-    this.admin = EthCrypto.createIdentity()
-    this.arLocal = new ArLocal(1984, false)
-    await this.arLocal.start()
-    await wait(1000)
-    await this.addFunds(this.bundler)
-    const warp = WarpFactory.forLocal()
-    warp.use(new DeployPlugin())
-    const deploy = new Deploy({ warp, wallet: this.bundler })
-    const weavedb = await deploy.weavedb({ ver: this.weavedb_version })
-    this.contracts = deploy.contracts
-    this.weavedb_srcTxId = weavedb.srcTxId
+  }
+  async genBunder() {
+    if (!this.bundler) {
+      this.bundler = await this.arweave.wallets.generate()
+      await this.addFunds(this.bundler)
+    } else {
+      console.log("bundler already exists")
+    }
+  }
+  async genAdmin() {
+    if (!this.admin) {
+      this.admin = EthCrypto.createIdentity()
+    } else {
+      console.log("admin already exists")
+    }
+  }
+  async deployWeaveDB() {
+    if (!this.weavedb_srcTxId) {
+      const warp = WarpFactory.forLocal()
+      warp.use(new DeployPlugin())
+      const deploy = new Deploy({ warp, wallet: this.bundler })
+      const weavedb = await deploy.weavedb({ ver: this.weavedb_version })
+      this.contracts = deploy.contracts
+      this.weavedb_srcTxId = weavedb.srcTxId
+    } else {
+      console.log("weavedb src contract already deployed")
+    }
+  }
+  async startVM() {
     this.conf = {
       secure: this.secure,
       weavedb_srcTxId: this.weavedb_srcTxId,
@@ -101,7 +142,17 @@ class Test {
       contracts: this.contracts,
     }
     this.vm = new VM({ conf: this.conf })
+  }
+  async startServer() {
     this.server = new Server({ query: this.vm.query.bind(this.vm) })
+  }
+  async start() {
+    await this.startArLocal()
+    await this.genBunder()
+    await this.genAdmin()
+    await this.deployWeaveDB()
+    await this.startVM()
+    await this.startServer()
     await wait(1000)
     return {
       dbname: this.dbname,
@@ -117,10 +168,13 @@ class Test {
       server: this.server,
     }
   }
-  async stop() {
-    this.server.server.forceShutdown()
+  async stopVM() {
     await this.vm.stop()
-    await this.arLocal.stop()
+  }
+  stopServer() {
+    this.server.server.forceShutdown()
+  }
+  deleteCache() {
     try {
       rmSync(resolve(__dirname, "../cache", this.dbname), {
         recursive: true,
@@ -133,6 +187,16 @@ class Test {
         force: true,
       })
     } catch (e) {}
+  }
+  async stopArLocal() {
+    await this.arLocal.stop()
+    this.arLocal_started = false
+  }
+  async stop() {
+    this.stopServer()
+    await this.stopVM()
+    await this.stopArLocal()
+    this.deleteCache()
   }
 }
 

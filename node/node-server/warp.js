@@ -149,7 +149,7 @@ class Syncer {
             },
           )
         } catch (e) {
-          console.log(e)
+          //console.log(e)
         }
       }
     }
@@ -203,7 +203,12 @@ class Syncer {
     }
   }
   async getTxs() {
-    return await this.warp.warp.interactionsLoader.load(this.contractTxId)
+    return await this.warp.warp.interactionsLoader.load(
+      this.contractTxId,
+      null,
+      null,
+      {},
+    )
   }
 }
 let syncer = null
