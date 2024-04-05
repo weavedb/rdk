@@ -143,7 +143,7 @@ const tx = await db.admin(
       rollup: true,
       plugins: { notifications: {} },
       tick: 1000 * 60 * 5,
-	  contractTxId // Warp L1 contract TxId
+      contractTxId // Warp L1 contract TxId
     },
   },
   { privateKey: admin.privateKey }
