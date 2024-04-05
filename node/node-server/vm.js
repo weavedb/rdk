@@ -228,7 +228,6 @@ class VM {
                 })
                 return
               } else {
-                const tx_deploy = { success: false }
                 const warp =
                   this.conf.arweave?.host === "localhost"
                     ? WarpFactory.forLocal().use(new DeployPlugin())
@@ -305,7 +304,7 @@ class VM {
                   return
                 } else {
                   const tx = await this.admin_db.update(
-                    { contractTxId: res.contractTxId, rollup: true },
+                    { contractTxId: res.contractTxId },
                     "dbs",
                     key,
                     auth,
@@ -353,6 +352,12 @@ class VM {
                 result: null,
                 err: "owner is not a valid EVM address",
               })
+            } else if (db.rollup !== true && db.contractTxId) {
+              callback(null, {
+                result: null,
+                err: `rollup setting must be true with contractTxId specified`,
+              })
+              return
             }
             const tx = await this.admin_db.set(db, "dbs", key, auth)
             if (tx.success) {
@@ -367,7 +372,18 @@ class VM {
                 plugins: db.plugins ?? this.conf.plugins ?? {},
                 bundler: this.conf.bundler,
               })
-              this.rollups[key].init()
+              this.rollups[key].init(() => {
+                if (db.contractTxId) {
+                  this.txid_map[db.contractTxId] = key
+                  this.rollups[key].deployContract(
+                    db.contractTxId,
+                    ++this.count,
+                    () => {
+                      console.log(`contract initialized! ${db.contractTxId}`)
+                    },
+                  )
+                }
+              })
             }
             callback(null, {
               result: tx.success ? JSON.stringify(tx) : null,
