@@ -19,6 +19,7 @@ describe("rollup node", function () {
   const RPC_NODE = "localhost:8080"
   const DATABASE_KEY = "testdb"
   const COLLECTION_NAME = "posts"
+  const CONTRACT_TX_ID = DATABASE_KEY
 
   before(async () => {
     // testing in insecure mode, never do that in production
@@ -38,7 +39,7 @@ describe("rollup node", function () {
       try {
         const db = new DB({
           rpc: RPC_NODE,
-          contractTxId: DATABASE_KEY,
+          contractTxId: CONTRACT_TX_ID,
           arweave: network,
         })
         const stats = await db.node({ op: "stats" })
@@ -71,7 +72,7 @@ describe("rollup node", function () {
       try {
         const db = new DB({
           rpc: RPC_NODE,
-          contractTxId: DATABASE_KEY,
+          contractTxId: CONTRACT_TX_ID,
           arweave: network,
         })
 
@@ -95,7 +96,7 @@ describe("rollup node", function () {
       try {
         const db = new DB({
           rpc: RPC_NODE,
-          contractTxId: DATABASE_KEY,
+          contractTxId: CONTRACT_TX_ID,
           arweave: network,
         })
 
@@ -127,7 +128,7 @@ describe("rollup node", function () {
       try {
         const db = new DB({
           rpc: RPC_NODE,
-          contractTxId: DATABASE_KEY,
+          contractTxId: CONTRACT_TX_ID,
           arweave: network,
         })
 
@@ -409,7 +410,7 @@ describe("rollup node", function () {
       try {
         const db = new DB({
           rpc: RPC_NODE,
-          contractTxId: `${DATABASE_KEY}#log`,
+          contractTxId: `${CONTRACT_TX_ID}#log`,
           arweave: network,
         })
         const page1 = await db.cget("txs", 1000)
