@@ -1,7 +1,7 @@
 const { expect } = require("chai")
 const SDK = require("weavedb-sdk-node")
 const EthCrypto = require("eth-crypto")
-const dbOwnerAuth = require("./../.weavedb/accounts/evm/account1.json")
+const dbOwnerAuth = require("./../.wallets/account1.json")
 
 describe("rollup node", function () {
   this.timeout(0)
@@ -28,19 +28,20 @@ describe("rollup node", function () {
       })
       await db.init()
 
-      const rules = {
-        "allow write": true,
-      }
-      const txSetRules = await db.setRules(rules, COLLECTION_NAME, dbOwnerAuth)
-      console.log(`txSetRules.success: ${txSetRules.success}`)
+      // const rules = {
+      //   "allow write": true,
+      // }
+      // const txSetRules = await db.setRules(rules, COLLECTION_NAME, dbOwnerAuth)
+      // console.log(`txSetRules.success: ${txSetRules.success}`)
 
       console.log("_JSON_DATA", _JSON_DATA)
-      const tx = await db.upsert(
+      const txUpsert = await db.upsert(
         _JSON_DATA,
         COLLECTION_NAME,
         _DOC_ID,
         _userAuth
       )
+      console.log(`txUpsert.success: ${txUpsert.success}`)
 
       const txGetDoc = await db.get(COLLECTION_NAME, _DOC_ID)
       console.log("txGetDoc", txGetDoc)
@@ -63,15 +64,21 @@ describe("rollup node", function () {
       })
       await db.init()
 
-      const rules = {
-        "allow write": true,
-      }
-      const txSetRules = await db.setRules(rules, COLLECTION_NAME, dbOwnerAuth)
-      console.log(`txSetRules.success: ${txSetRules.success}`)
+      // const rules = {
+      //   "allow write": true,
+      // }
+      // const txSetRules = await db.setRules(rules, COLLECTION_NAME, dbOwnerAuth)
+      // console.log(`txSetRules.success: ${txSetRules.success}`)
 
       console.log("JSON_DATA", JSON_DATA)
-      const tx = await db.upsert(JSON_DATA, COLLECTION_NAME, DOC_ID, userAuth)
-      //   const txResult = await tx.getResult()
+      const txUpsert = await db.upsert(
+        JSON_DATA,
+        COLLECTION_NAME,
+        DOC_ID,
+        userAuth
+      )
+      console.log(`txUpsert.success: ${txUpsert.success}`)
+      //   const txResult = await txUpsert.getResult()
       //   console.log("txResult",txResult)
     } catch (e) {
       console.error(e)
