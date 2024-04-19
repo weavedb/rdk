@@ -13,16 +13,20 @@ const DEFAULT_NODES = [
 async function fetchNodes() {
   try {
     const response = await fetch(API_URL)
-    const userNodes = await response.json()
-    console.log("userNodes", userNodes)
+    const jsonResponse = await response.json()
+    console.log("jsonResponse", jsonResponse)
+    const { rollups } = jsonResponse
+    console.log("rollups", rollups)
+
     const formattedNodes = [
       ...DEFAULT_NODES,
-      ...userNodes.map((node) => ({
+      ...rollups.map((node) => ({
         key: node.rollupId,
         endpoint: `${node.rollupId}.${DOMAIN_URL}:${PORT_NUM}`,
-        network: node.OrgId,
+        network: node.ipAddress,
       })),
     ]
+
     return formattedNodes
   } catch (error) {
     console.error("Failed to fetch nodes:", error)
