@@ -1,5 +1,4 @@
-const API_URL =
-  "https://lcb7ocx1z4.execute-api.ap-southeast-1.amazonaws.com/dev/nodes"
+const API_URL = "https://raas-api.weavedb-node.xyz/nodes"
 const DOMAIN_URL = "raas.weavedb-node.xyz"
 const PORT_NUM = "443"
 const DEFAULT_NODES = [
