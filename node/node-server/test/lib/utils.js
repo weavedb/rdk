@@ -58,7 +58,7 @@ class Deploy {
 }
 
 const wait = ms => {
-  console.log("waiting for...", 1000, "ms")
+  console.log("waiting for...", String(ms), "ms")
   return new Promise(res => setTimeout(() => res(), ms))
 }
 
