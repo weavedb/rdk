@@ -3574,10 +3574,10 @@ watchpack@2.4.0:
     glob-to-regexp "^0.4.1"
     graceful-fs "^4.1.2"
 
-weavedb-base@^0.34.0:
-  version "0.34.0"
-  resolved "https://registry.yarnpkg.com/weavedb-base/-/weavedb-base-0.34.0.tgz#d1bb0ee634cd96827b7f558f455445d4119bbeaa"
-  integrity sha512-WQhG9HVEBxesPyodhC75lOXUprWrHvYd66zYRxbXEdY/CnzE7Xly9/jYqw2Gn+oT7S79ctDnK+lxCkT+ueK4Qg==
+weavedb-base@^0.39.1:
+  version "0.39.1"
+  resolved "https://registry.yarnpkg.com/weavedb-base/-/weavedb-base-0.39.1.tgz#98920ed06f13bb5c468ca07121b52cd82e3472be"
+  integrity sha512-6FOlHyob3wfAU1h9FUarr7gwmi8oeKN9oSnse4L1w4w342/qKp2U2zRi6JdHyci2qM+w3/JqdXtA/YjA3nwD7Q==
   dependencies:
     "@metamask/eth-sig-util" "^4.0.1"
     "@metamask/legacy-web3" "^2.0.0"
@@ -3589,10 +3589,10 @@ weavedb-base@^0.34.0:
     pako "^2.1.0"
     ramda "^0.28.0"
 
-weavedb-client@^0.34.0:
-  version "0.34.0"
-  resolved "https://registry.yarnpkg.com/weavedb-client/-/weavedb-client-0.34.0.tgz#ffe6d5ddaa067cbc872ec7a50fd6a0956ee55d35"
-  integrity sha512-0nvwPoVVgPuwN0W8PsnIKsI2l8LhQxgtV/ewNpDl/bZ5p9NMJmAM6z3V6f0MMsvpL458oOxleVynLMqq2R05aw==
+weavedb-client@^0.39.2:
+  version "0.39.2"
+  resolved "https://registry.yarnpkg.com/weavedb-client/-/weavedb-client-0.39.2.tgz#707bf5a21b86895c2d09910ff29d19fe3051e32e"
+  integrity sha512-BEB1AoxKMXn5krAas+pMwtA5QczWxPl9yLZO+EXHwY5FPxx+L+YXuugSI81ZbkIOVIsCHKP8um9x5qDxd7+jdQ==
   dependencies:
     "@lit-protocol/sdk-browser" "^1.3.3"
     "@metamask/legacy-web3" "^2.0.0"
@@ -3600,7 +3600,7 @@ weavedb-client@^0.34.0:
     google-protobuf "^3.21.0"
     grpc-web "^1.3.1"
     ramda "^0.28.0"
-    weavedb-base "^0.34.0"
+    weavedb-base "^0.39.1"
 
 web-streams-polyfill@^3.0.3:
   version "3.2.1"
