@@ -141,7 +141,7 @@ export default function Home() {
                         <Box
                           as="a"
                           color="#763AAC"
-                          href={`https://sonar.warp.cc/#/app/contract/${db_info.contractTxId}`}
+                          href={`https://sonar.warp.cc/#/app/contract/${db_info.contractTxId}?network=mainnet`}
                           target="_blank"
                         >
                           {db_info.contractTxId}
@@ -260,7 +260,7 @@ export default function Home() {
                                     <Box
                                       as="a"
                                       target="_blank"
-                                      href={`https://sonar.warp.cc/#/app/interaction/${v.txid}`}
+                                      href={`https://sonar.warp.cc/#/app/interaction/${v.txid}?network=mainnet`}
                                       color="#763AAC"
                                       onClick={e => e.stopPropagation()}
                                     >

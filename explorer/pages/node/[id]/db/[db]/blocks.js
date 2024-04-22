@@ -167,7 +167,7 @@ export default function Home() {
                         <Box
                           as="a"
                           color="#763AAC"
-                          href={`https://sonar.warp.cc/#/app/contract/${db_info.contractTxId}`}
+                          href={`https://sonar.warp.cc/#/app/contract/${db_info.contractTxId}?network=mainnet`}
                           target="_blank"
                         >
                           {db_info.contractTxId}
