@@ -1,22 +1,16 @@
 const { expect } = require("chai")
 const DB = require("weavedb-node-client")
-const SDK = require("weavedb-sdk-node")
 const { wait, Test } = require("./lib/utils")
 const crypto = require("crypto")
 const EthCrypto = require("eth-crypto")
 const config = require("../weavedb.config")
 const nodeAdmin = { privateKey: config.admin }
-const users = require("../.weavedb/accounts/evm/users.json")
-
-const {
-  ServiceObject,
-} = require("@google-cloud/storage/build/src/nodejs-common")
 
 describe("rollup node", function () {
   this.timeout(0)
   let admin, network, bundler, test
 
-  const RPC_NODE = "localhost:8080"
+  const RPC_NODE = "localhost:9090"
   const DATABASE_KEY = "testdb"
   const COLLECTION_NAME = "posts"
   const CONTRACT_TX_ID = DATABASE_KEY
@@ -40,7 +34,6 @@ describe("rollup node", function () {
         const db = new DB({
           rpc: RPC_NODE,
           contractTxId: CONTRACT_TX_ID,
-          arweave: network,
         })
         const stats = await db.node({ op: "stats" })
         expect(stats).to.eql({ dbs: [] })
@@ -73,7 +66,6 @@ describe("rollup node", function () {
         const db = new DB({
           rpc: RPC_NODE,
           contractTxId: CONTRACT_TX_ID,
-          arweave: network,
         })
 
         const txSetRules = await db.setRules(
@@ -92,44 +84,11 @@ describe("rollup node", function () {
   }
 
   if (1) {
-    it("should set schema", async () => {
+    it("should add new docs in parallel", async () => {
       try {
         const db = new DB({
           rpc: RPC_NODE,
           contractTxId: CONTRACT_TX_ID,
-          arweave: network,
-        })
-
-        const schema = {
-          posts: {
-            type: "object",
-            required: ["id", "body", "owner", "date"],
-            properties: {
-              id: { type: "string" },
-              body: { type: "string" },
-              owner: { type: "string" },
-              date: { type: "number" },
-            },
-          },
-        }
-        const txSetSchema = await db.setSchema(schema, COLLECTION_NAME, {
-          privateKey: admin.privateKey,
-        })
-        expect(txSetSchema.success).to.eql(true)
-        // console.log("getSchema", await db.getSchema(COLLECTION_NAME))
-      } catch (e) {
-        console.error(e)
-      }
-    })
-  }
-
-  if (1) {
-    it("should add new document", async () => {
-      try {
-        const db = new DB({
-          rpc: RPC_NODE,
-          contractTxId: CONTRACT_TX_ID,
-          arweave: network,
         })
 
         const TX_COUNT = 100
@@ -411,7 +370,6 @@ describe("rollup node", function () {
         const db = new DB({
           rpc: RPC_NODE,
           contractTxId: `${CONTRACT_TX_ID}#log`,
-          arweave: network,
         })
         const page1 = await db.cget("txs", 1000)
         const filteredItemsPage1 = page1.filter(item => {
@@ -420,7 +378,7 @@ describe("rollup node", function () {
           }
           return true
         })
-        console.log("filteredItemsPage1", filteredItemsPage1)
+        console.log("items that have null data in WAL : ", filteredItemsPage1)
         if (filteredItemsPage1.length > 0)
           throw "data is null on some items fetched from WAL"
       } catch (e) {
