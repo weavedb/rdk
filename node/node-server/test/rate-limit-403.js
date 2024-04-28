@@ -2,20 +2,22 @@ const { expect } = require("chai")
 const SDK = require("weavedb-sdk-node")
 const EthCrypto = require("eth-crypto")
 
-describe("rollup node", function () {
+describe("Rate Limit Error 403", function () {
   this.timeout(0)
 
-  const CONTRACT_TX_ID = "tbg8t02nuUl_KahdVcOd6lxDeFDgtEQnVIyyqR8i8Nw"
+  const CONTRACT_TX_ID = "AoKUJICroTBG5QO4Hdduy7ag-KTGCFLo-B21irCyVWs"
   const COLLECTION_NAME = "people"
   const TX_COUNT = 200
 
-  before(async () => {})
+  before(async () => {
+    this.bail(true)
+  })
 
   after(async () => {
     process.exit()
   })
 
-  it("should not fail", async () => {
+  it("should write to DB contract without rate limiting error", async () => {
     try {
       const db = new SDK({
         contractTxId: CONTRACT_TX_ID,
