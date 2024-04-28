@@ -1,7 +1,9 @@
 const { expect } = require("chai")
 const SDK = require("weavedb-sdk-node")
+const fs = require("fs")
+const path = require("path")
 
-describe("rate limit error 429", function () {
+describe("Rate Limit Error 429", function () {
   this.timeout(0)
   const COLLECTION_NAME = "people"
   const CONTRACT_TX_ID = "tbg8t02nuUl_KahdVcOd6lxDeFDgtEQnVIyyqR8i8Nw"
@@ -15,13 +17,20 @@ describe("rate limit error 429", function () {
     process.exit()
   })
 
-  it("should fetch latest DB contract state", async () => {
+  it("should not have a cache folder", () => {
+    const cachePath = path.resolve(__dirname, "../cache")
+    const folderExists = fs.existsSync(cachePath) // Check if the folder exists
+    expect(folderExists).to.be.false // Assert that the folder does not exist
+  })
+
+  it("should fetch latest DB contract state without rate limiting error ", async () => {
     try {
       const db = new SDK({
         contractTxId: CONTRACT_TX_ID,
       })
       await db.init()
       console.log(db)
+      console.log("waiting to fetch docs from db collection.....")
       const txGetDocs = await db.get(COLLECTION_NAME, DOC_ID_TEST)
       console.log("txGetDocs", txGetDocs)
       expect(txGetDocs.address).to.eql(DOC_ID_TEST)
