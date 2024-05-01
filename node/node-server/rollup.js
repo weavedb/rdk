@@ -119,7 +119,7 @@ class Rollup {
     for (let v of bundles) {
       if (isNil(v.data?.input)) continue
       const len = JSON.stringify(v.data.input).length
-      if (sizes + len > 2500) {
+      if (sizes + len > 15000) {
         i += 1
         sizes = 0
         b[i] = { bundles: [], t: [], size: 0 }
