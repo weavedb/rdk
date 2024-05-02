@@ -142,6 +142,7 @@ class Rollup {
     }
     return b
   }
+
   async _bundle() {
     return new Promise(async _res => {
       try {
@@ -186,6 +187,7 @@ class Rollup {
       }
     })
   }
+
   async bundle() {
     let done = false
     let recovery = false
@@ -262,6 +264,7 @@ class Rollup {
       this.recover()
     }
   }
+
   async recover() {
     this.init_warp = false
     this.error_count = 0
@@ -288,6 +291,7 @@ class Rollup {
       },
     })
   }
+
   async initDB() {
     console.log(`Owner Account: ${this.owner}`)
     await this.initWAL()
@@ -295,6 +299,7 @@ class Rollup {
     await this.initWarp()
     await this.initPlugins()
   }
+
   async recoverWAL() {
     this.recovering = true
     this.cb[++this.count] = async (err, { txs }) => {
@@ -456,6 +461,7 @@ class Rollup {
       opt: {},
     })
   }
+
   async initSyncer() {
     if (!isNil(this.syncer)) this.syncer.kill()
     this.syncer = fork(path.resolve(__dirname, "warp"))
@@ -488,6 +494,7 @@ class Rollup {
       },
     })
   }
+
   async initPlugins() {
     for (let k in this.plugins) {
       const Plugin = require(`./plugins/${k}`)
