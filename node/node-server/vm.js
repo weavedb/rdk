@@ -380,15 +380,20 @@ class VM {
                     ++this.count,
                     () => {
                       console.log(`contract initialized! ${db.contractTxId}`)
+                      callback(null, {
+                        result: tx.success ? JSON.stringify(tx) : null,
+                        err: tx.success ? null : "error",
+                      })
                     },
                   )
+                } else {
+                  callback(null, {
+                    result: tx.success ? JSON.stringify(tx) : null,
+                    err: tx.success ? null : "error",
+                  })
                 }
               })
             }
-            callback(null, {
-              result: tx.success ? JSON.stringify(tx) : null,
-              err: tx.success ? null : "error",
-            })
             break
           case "update_db":
             ;({ err, signer } = await validate(JSON.parse(query), txid))
