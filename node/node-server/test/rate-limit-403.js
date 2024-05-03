@@ -22,6 +22,8 @@ describe("Rate Limit Error 403", function () {
       const db = new SDK({
         contractTxId: CONTRACT_TX_ID,
         nocache: true,
+        sequencerUrl: "https://gw.warp.cc/",
+        apiKey: process.env.apiKey,
       })
       await db.init()
 
@@ -32,7 +34,7 @@ describe("Rate Limit Error 403", function () {
           { name: "sample", address: userAddress },
           COLLECTION_NAME,
           userAddress,
-          userAuth
+          userAuth,
         )
         expect(txAddPost.success).to.eql(true)
         console.log(`[${i}] ${txAddPost.docID} txAddPost: ${txAddPost.success}`)
