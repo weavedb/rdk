@@ -2,7 +2,7 @@ const { expect } = require("chai")
 const DB = require("weavedb-node-client")
 const SDK = require("weavedb-sdk-node")
 const { wait, Test } = require("./lib/utils")
-
+const sleep = ms => new Promise(ret => setTimeout(() => ret(), ms))
 describe("rollup node", function () {
   this.timeout(0)
   let admin, network, bundler, test
@@ -11,11 +11,11 @@ describe("rollup node", function () {
     // testing in insecure mode, never do that in production
     test = new Test({ secure: false })
     ;({ network, bundler, admin } = await test.start())
+    await sleep(3000)
   })
 
   after(async () => {
     await test.stop()
-
     // some processes linger, so force exit for now
     process.exit()
   })
@@ -44,8 +44,6 @@ describe("rollup node", function () {
       { privateKey: admin.privateKey },
     )
     expect(tx.success).to.eql(true)
-    await wait(2000)
-
     // deploy L1 warp contract (via node)
     const { contractTxId, srcTxId } = await db.admin(
       { op: "deploy_contract", key: "testdb" },

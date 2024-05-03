@@ -8872,21 +8872,6 @@ weak-lru-cache@^1.2.2:
   resolved "https://registry.yarnpkg.com/weak-lru-cache/-/weak-lru-cache-1.2.2.tgz#fdbb6741f36bae9540d12f480ce8254060dccd19"
   integrity sha512-DEAoo25RfSYMuTGc9vPJzZcZullwIqRDSI9LOy+fkCJPi6hykCnfKaXTuPBDuXAUcqHXyOgFtHNp/kB2FjYHbw==
 
-weavedb-base@^0.38.0:
-  version "0.38.0"
-  resolved "https://registry.yarnpkg.com/weavedb-base/-/weavedb-base-0.38.0.tgz#14a925b85ac5af978be206db38dd91a52b763ee8"
-  integrity sha512-6v3Y0UgUV3fAmb09QBtQys9aHd0YPZ8NWBgJXinD9Rya4vmo6+i8yVaEsNF5F7kYXxfSa0IJ5rEcIe+PKHmLFA==
-  dependencies:
-    "@metamask/eth-sig-util" "^4.0.1"
-    "@metamask/legacy-web3" "^2.0.0"
-    "@simplewebauthn/server" "^7.2.0"
-    eth-crypto "^2.3.0"
-    ethereumjs-util "^7.1.5"
-    ethers "5.7.2"
-    md5 "^2.3.0"
-    pako "^2.1.0"
-    ramda "^0.28.0"
-
 weavedb-base@^0.39.1:
   version "0.39.1"
   resolved "https://registry.yarnpkg.com/weavedb-base/-/weavedb-base-0.39.1.tgz#98920ed06f13bb5c468ca07121b52cd82e3472be"
@@ -8926,16 +8911,16 @@ weavedb-node-client@^0.39.2:
     ramda "^0.28.0"
     weavedb-base "^0.39.1"
 
-weavedb-offchain@^0.39.0:
-  version "0.39.0"
-  resolved "https://registry.yarnpkg.com/weavedb-offchain/-/weavedb-offchain-0.39.0.tgz#cc8d5899aeaac8353a3301310c498ac4ffcf8369"
-  integrity sha512-amLgmfJwKxpTRecxSatV3AQeh2YdIGIHOLTcbi6WGh+0SRkWhV1JQgbJ1ApjPUOdFoMcwSgUbV2DxU8zJkyDUw==
+weavedb-offchain@^0.39.3:
+  version "0.39.3"
+  resolved "https://registry.yarnpkg.com/weavedb-offchain/-/weavedb-offchain-0.39.3.tgz#58ab6165fabe36c638daf7142e7f3941596b25b0"
+  integrity sha512-LH+8lDHoCzZHyLsxjVn9f/xE17xQOxGRyMljgc5a7WhtsGO5PqlG8HWlJPC4HUVTx8iIL01aV9z9V4ELT3arJQ==
   dependencies:
     "@metamask/legacy-web3" "^2.0.0"
     arweave "^1.11.4"
     md5 "^2.3.0"
     ramda "^0.28.0"
-    weavedb-base "^0.38.0"
+    weavedb-base "^0.39.1"
     weavedb-contracts "^0.39.0"
 
 weavedb-sdk-node@^0.39.10:
