@@ -27,6 +27,8 @@ describe("Rate Limit Error 429", function () {
     try {
       const db = new SDK({
         contractTxId: CONTRACT_TX_ID,
+        sequencerUrl: "https://gw.warp.cc/",
+        apiKey: "793d13df-2183-46a9",
       })
       await db.init()
       console.log(db)
