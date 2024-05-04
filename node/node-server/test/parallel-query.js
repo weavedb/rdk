@@ -3,12 +3,10 @@ const DB = require("weavedb-node-client")
 const SDK_NODE = require("weavedb-sdk-node")
 const { wait, Test } = require("./lib/utils")
 const EthCrypto = require("eth-crypto")
-const config = require("../weavedb.config")
-const nodeAdmin = { privateKey: config.admin }
 
 describe("rollup node", function () {
   this.timeout(0)
-  let admin, network, bundler, test
+  let admin, network, bundler, test, nodeAdmin
 
   const RPC_NODE = "localhost:9090"
   const DATABASE_KEY = "testdb"
@@ -18,6 +16,7 @@ describe("rollup node", function () {
     // testing in insecure mode, never do that in production
     test = new Test({ secure: false })
     ;({ network, bundler, admin } = await test.start())
+    nodeAdmin = { privateKey: admin.privateKey }
     this.bail(true)
   })
 
@@ -35,6 +34,8 @@ describe("rollup node", function () {
         rpc: RPC_NODE,
         contractTxId: DATABASE_KEY,
       })
+      await wait(2000)
+
       const stats = await db.node({ op: "stats" })
       expect(stats).to.eql({ dbs: [] })
 
@@ -49,7 +50,7 @@ describe("rollup node", function () {
             owner: dbOwner.address.toLowerCase(),
           },
         },
-        nodeAdmin
+        nodeAdmin,
       )
       console.log("DB owner: ", dbOwner.address.toLowerCase())
       expect(tx.success).to.eql(true)
@@ -57,7 +58,7 @@ describe("rollup node", function () {
 
       const { contractTxId, srcTxId } = await db.admin(
         { op: "deploy_contract", key: DATABASE_KEY },
-        nodeAdmin
+        nodeAdmin,
       )
       console.log("contractTxId", contractTxId)
       expect((await db.node({ op: "stats" })).dbs[0].data.rollup).to.eql(true)
@@ -72,19 +73,20 @@ describe("rollup node", function () {
         [["allow()"]],
         COLLECTION_NAME,
         "write",
-        dbOwner
+        dbOwner,
       )
       expect(txSetRules.success).to.eql(true)
-      await wait(25000)
+      await wait(2000)
 
       const warpDb = new SDK_NODE({
+        arweave: network,
         contractTxId,
         nocache: true,
         type: 3,
       })
       await warpDb.init()
       expect(
-        (await warpDb.db.readState()).cachedValue.state.rollup.height
+        (await warpDb.db.readState()).cachedValue.state.rollup.height,
       ).to.eql(1)
 
       const TX_COUNT = 4
@@ -94,7 +96,7 @@ describe("rollup node", function () {
           const txAddPost = await db2.add(
             { address: userAuth.address },
             COLLECTION_NAME,
-            userAuth
+            userAuth,
           )
         }
         return "addPost1"
@@ -105,7 +107,7 @@ describe("rollup node", function () {
           const txAddPost = await db2.add(
             { address: userAuth.address },
             COLLECTION_NAME,
-            userAuth
+            userAuth,
           )
         }
         return "addPost2"
@@ -116,7 +118,7 @@ describe("rollup node", function () {
           const txAddPost = await db2.add(
             { address: userAuth.address },
             COLLECTION_NAME,
-            userAuth
+            userAuth,
           )
         }
         return "addPost3"
@@ -127,7 +129,7 @@ describe("rollup node", function () {
           const txAddPost = await db2.add(
             { address: userAuth.address },
             COLLECTION_NAME,
-            userAuth
+            userAuth,
           )
         }
         return "addPost4"
@@ -141,7 +143,7 @@ describe("rollup node", function () {
           addPost4(),
         ])
         console.log(results)
-        await wait(25000)
+        await wait(4000)
         const dbLog = new DB({
           contractTxId: `${contractTxId}#log`,
           rpc: RPC_NODE,
