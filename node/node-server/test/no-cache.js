@@ -39,7 +39,7 @@ describe("rollup node", function () {
         _JSON_DATA,
         COLLECTION_NAME,
         _DOC_ID,
-        _userAuth
+        _userAuth,
       )
       console.log(`txUpsert.success: ${txUpsert.success}`)
 
@@ -75,7 +75,7 @@ describe("rollup node", function () {
         JSON_DATA,
         COLLECTION_NAME,
         DOC_ID,
-        userAuth
+        userAuth,
       )
       console.log(`txUpsert.success: ${txUpsert.success}`)
       //   const txResult = await txUpsert.getResult()
