@@ -1,7 +1,6 @@
 const { expect } = require("chai")
 const SDK = require("weavedb-sdk-node")
 const EthCrypto = require("eth-crypto")
-const dbOwnerAuth = require("./../.wallets/account1.json")
 
 describe("rollup node", function () {
   this.timeout(0)
@@ -78,8 +77,7 @@ describe("rollup node", function () {
         userAuth,
       )
       console.log(`txUpsert.success: ${txUpsert.success}`)
-      //   const txResult = await txUpsert.getResult()
-      //   console.log("txResult",txResult)
+      expect((await txUpsert.getResult()).success).to.eql(true)
     } catch (e) {
       console.error(e)
       expect(e).to.eql(null)
