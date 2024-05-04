@@ -592,7 +592,8 @@ class Rollup {
           if (this.recovering && !isNil(this.recovery_map[t.txid])) {
             t = mergeLeft(this.recovery_map[t.txid], t)
           }
-          await this.wal.set(t, "txs", `${t.id}`)
+          const res = await this.wal.set(t, "txs", `${t.id}`)
+          if (!res.success) console.log("wal error")
           this.last = Date.now()
           for (let k in this.plugins) {
             this.plugins[k].db
@@ -707,10 +708,13 @@ class Rollup {
               read: _onDryWrite?.read || null,
             }
         result = await db.write(key.func, _query, true, true, false, onDryWrite)
+        if (!result.success) {
+          console.log("got error....")
+        }
         //if (!isNil(virtual_txid)) this.results[virtual_txid] = result
       }
     } catch (e) {
-      console.log(e)
+      console.log("ok i think we are here...", e)
       err =
         typeof e === "string"
           ? e

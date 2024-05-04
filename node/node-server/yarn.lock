@@ -8911,10 +8911,10 @@ weavedb-node-client@^0.39.2:
     ramda "^0.28.0"
     weavedb-base "^0.39.1"
 
-weavedb-offchain@^0.39.3:
-  version "0.39.3"
-  resolved "https://registry.yarnpkg.com/weavedb-offchain/-/weavedb-offchain-0.39.3.tgz#58ab6165fabe36c638daf7142e7f3941596b25b0"
-  integrity sha512-LH+8lDHoCzZHyLsxjVn9f/xE17xQOxGRyMljgc5a7WhtsGO5PqlG8HWlJPC4HUVTx8iIL01aV9z9V4ELT3arJQ==
+weavedb-offchain@^0.39.4:
+  version "0.39.4"
+  resolved "https://registry.yarnpkg.com/weavedb-offchain/-/weavedb-offchain-0.39.4.tgz#b1ecf32a3144594f76e12dce6765efdd6665a54d"
+  integrity sha512-yPVGpF43He3/UYHmBNJmTae31Iw7/sk+1+wixoO6qHyjpQWyc0yufzNtPIVhlrVr2TKJ3SNoO+5L0S3WIIcXsg==
   dependencies:
     "@metamask/legacy-web3" "^2.0.0"
     arweave "^1.11.4"
