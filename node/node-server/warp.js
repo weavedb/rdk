@@ -38,6 +38,7 @@ class Syncer {
       contractTxId: this.contractTxId,
       remoteStateSyncEnabled: false,
       nocache: true,
+      sequencerUrl: "https://gw.warp.cc/",
       progress: async input => {
         console.log(
           `loading ${this.contractTxId} [${input.currentInteraction}/${input.allInteractions}]`,

@@ -119,7 +119,7 @@ class Rollup {
     for (let v of bundles) {
       if (isNil(v.data?.input)) continue
       const len = JSON.stringify(v.data.input).length
-      if (sizes + len > 2500) {
+      if (sizes + len > 15000) {
         i += 1
         sizes = 0
         b[i] = { bundles: [], t: [], size: 0 }
@@ -142,6 +142,7 @@ class Rollup {
     }
     return b
   }
+
   async _bundle() {
     return new Promise(async _res => {
       try {
@@ -186,6 +187,7 @@ class Rollup {
       }
     })
   }
+
   async bundle() {
     let done = false
     let recovery = false
@@ -262,6 +264,7 @@ class Rollup {
       this.recover()
     }
   }
+
   async recover() {
     this.init_warp = false
     this.error_count = 0
@@ -288,6 +291,7 @@ class Rollup {
       },
     })
   }
+
   async initDB() {
     console.log(`Owner Account: ${this.owner}`)
     await this.initWAL()
@@ -295,6 +299,7 @@ class Rollup {
     await this.initWarp()
     await this.initPlugins()
   }
+
   async recoverWAL() {
     this.recovering = true
     this.cb[++this.count] = async (err, { txs }) => {
@@ -456,6 +461,7 @@ class Rollup {
       opt: {},
     })
   }
+
   async initSyncer() {
     if (!isNil(this.syncer)) this.syncer.kill()
     this.syncer = fork(path.resolve(__dirname, "warp"))
@@ -488,6 +494,7 @@ class Rollup {
       },
     })
   }
+
   async initPlugins() {
     for (let k in this.plugins) {
       const Plugin = require(`./plugins/${k}`)
@@ -585,7 +592,8 @@ class Rollup {
           if (this.recovering && !isNil(this.recovery_map[t.txid])) {
             t = mergeLeft(this.recovery_map[t.txid], t)
           }
-          await this.wal.set(t, "txs", `${t.id}`)
+          const res = await this.wal.set(t, "txs", `${t.id}`)
+          if (!res.success) console.log("wal error")
           this.last = Date.now()
           for (let k in this.plugins) {
             this.plugins[k].db
@@ -700,10 +708,13 @@ class Rollup {
               read: _onDryWrite?.read || null,
             }
         result = await db.write(key.func, _query, true, true, false, onDryWrite)
+        if (!result.success) {
+          console.log("got error....")
+        }
         //if (!isNil(virtual_txid)) this.results[virtual_txid] = result
       }
     } catch (e) {
-      console.log(e)
+      console.log("ok i think we are here...", e)
       err =
         typeof e === "string"
           ? e
