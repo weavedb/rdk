@@ -46,7 +46,6 @@ class Rollup {
         await this.cb[id]?.(err, result)
         delete this.cb[id]
       } else if (op === "init") {
-        console.log(`initialized: ${txid}`)
         if (is(Function, this.afterInit)) this.afterInit()
       }
     })
@@ -234,12 +233,12 @@ class VM {
                     : WarpFactory.forMainnet().use(new DeployPlugin())
                 const srcTxId =
                   this.conf.weavedb_srcTxId ??
-                  "Ohr4AU6jRUCLoNSTTqu3bZ8GulKZ0V8gUm-vwrRbmS4"
+                  "E14TapQNshyUIyN_DNhI0-YdUs8OP4-KXSgZnSxnROM"
                 let res = null
                 let err = null
                 try {
                   let initialState = {
-                    version: this.conf.weavedb_version ?? "0.37.2",
+                    version: this.conf.weavedb_version ?? "0.40.0",
                     canEvolve: true,
                     evolve: null,
                     secure: _db.secure ?? this.conf.secure,
@@ -512,7 +511,4 @@ class VM {
   }
 }
 
-module.exports = {
-  VM,
-  Rollup,
-}
+module.exports = { VM, Rollup }

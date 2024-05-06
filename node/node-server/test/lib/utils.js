@@ -76,7 +76,7 @@ class Test {
     this.bundler = bundler
     this.secure = secure
     this.weavedb_srcTxId = weavedb_srcTxId
-    this.weavedb_version = weavedb_version ?? "0.37.2"
+    this.weavedb_version = weavedb_version ?? "0.40.0"
     this.arLocal_started = false
     this.network = network ?? {
       host: "localhost",
