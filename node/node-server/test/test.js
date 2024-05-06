@@ -2,7 +2,7 @@ const { expect } = require("chai")
 const DB = require("weavedb-node-client")
 const SDK = require("weavedb-sdk-node")
 const { wait, Test } = require("./lib/utils")
-const sleep = ms => new Promise(ret => setTimeout(() => ret(), ms))
+
 describe("rollup node", function () {
   this.timeout(0)
   let admin, network, bundler, test
@@ -11,7 +11,7 @@ describe("rollup node", function () {
     // testing in insecure mode, never do that in production
     test = new Test({ secure: false })
     ;({ network, bundler, admin } = await test.start())
-    await sleep(3000)
+    await wait(3000)
   })
 
   after(async () => {
@@ -26,6 +26,7 @@ describe("rollup node", function () {
       contractTxId: "testdb",
       arweave: network,
     })
+    await wait(2000)
     const stats = await db.node({ op: "stats" })
     expect(stats).to.eql({ dbs: [] })
 
@@ -59,7 +60,7 @@ describe("rollup node", function () {
       arweave: network,
     })
     await warp_db.init()
-    expect((await warp_db.getInfo()).version).to.eql("0.37.2")
+    expect((await warp_db.getInfo()).version).to.eql("0.40.0")
 
     // update the DB (via node)
     const db2 = new DB({
@@ -75,10 +76,9 @@ describe("rollup node", function () {
 
     // check rollup
     await wait(5000)
-    expect(
-      (await warp_db.db.readState()).cachedValue.state.rollup.height,
-    ).to.eql(1)
 
+    const res = await warp_db.db.readState()
+    expect(res.cachedValue.state.rollup.height).to.eql(1)
     // check if L1 Warp state is the same as L2 DB state
     expect(await warp_db.get("ppl", "Bob")).to.eql(Bob)
   })
