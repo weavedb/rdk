@@ -319,6 +319,12 @@ class Rollup {
             owner: this.owner,
             secure: this.secure ?? true,
             bundlers: [bundler],
+            auth: {
+              algorithms: ["secp256k1", "secp256k1-2", "ed25519", "rsa256"],
+              name: "weavedb",
+              version: "1",
+              //skip_validation: true,
+            },
           },
         }
         try {
@@ -517,6 +523,7 @@ class Rollup {
   async initWAL() {
     this.wal = new DB({
       type: 3,
+      local: true,
       noauth: true,
       cache: {
         initialize: async obj => {
@@ -540,7 +547,16 @@ class Rollup {
           return val
         },
       },
-      state: { owner: this.owner, secure: false },
+      state: {
+        owner: this.owner,
+        secure: false,
+        auth: {
+          algorithms: ["secp256k1", "secp256k1-2", "ed25519", "rsa256"],
+          name: "weavedb",
+          version: "1",
+          //skip_validation: true,
+        },
+      },
     })
     await this.wal.initialize()
     await this.wal.addIndex([["commit"], ["id"]], "txs")
@@ -556,11 +572,21 @@ class Rollup {
   }
 
   async initOffchain() {
-    const state = {
-      ...{ owner: this.owner, secure: this.secure ?? true },
+    let state = {
+      ...{
+        owner: this.owner,
+        secure: this.secure ?? true,
+        auth: {
+          algorithms: ["secp256k1", "secp256k1-2", "ed25519", "rsa256"],
+          name: "weavedb",
+          version: "1",
+          //skip_validation: true,
+        },
+      },
       ...this.initial_state,
     }
     this.db = new DB({
+      local: true,
       contractTxId: this.contractTxId ?? this.txid,
       type: 3,
       cache: {
@@ -576,14 +602,14 @@ class Rollup {
         onWrite: async (tx, obj, param) => {
           let prs = [obj.lmdb.put("state", tx.state)]
           for (const k in tx.result.kvs) {
-            //this.kvs[k] = tx.result.kvs[k]
+            this.kvs[k] = tx.result.kvs[k]
             prs.push(obj.lmdb.put(k, tx.result.kvs[k]))
           }
-          await Promise.all(prs).then(() => {})
+          Promise.all(prs).then(() => {})
           let t = {
             id: ++this.tx_count,
             txid: tx.result.transaction.id,
-            commit: this.recovering,
+            commit: false,
             tx_ts: tx.result.transaction.timestamp,
             input: param,
             docID: tx.result.docID,
@@ -592,8 +618,9 @@ class Rollup {
           if (this.recovering && !isNil(this.recovery_map[t.txid])) {
             t = mergeLeft(this.recovery_map[t.txid], t)
           }
-          const res = await this.wal.set(t, "txs", `${t.id}`)
-          if (!res.success) console.log("wal error")
+          this.wal.set(t, "txs", `${t.id}`).then(res => {
+            if (!res.success) console.log("wal error")
+          })
           this.last = Date.now()
           for (let k in this.plugins) {
             this.plugins[k].db
@@ -602,8 +629,7 @@ class Rollup {
           }
         },
         get: async (key, obj) => {
-          //let val = this.kvs[key]
-          let val
+          let val = this.kvs[key]
           if (typeof val === "undefined") val = await obj.lmdb.get(key)
           return val
         },
@@ -707,14 +733,11 @@ class Rollup {
               cache,
               read: _onDryWrite?.read || null,
             }
+        //result = { success: true }
         result = await db.write(key.func, _query, true, true, false, onDryWrite)
-        if (!result.success) {
-          console.log("got error....")
-        }
         //if (!isNil(virtual_txid)) this.results[virtual_txid] = result
       }
     } catch (e) {
-      console.log("ok i think we are here...", e)
       err =
         typeof e === "string"
           ? e
