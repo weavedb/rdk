@@ -3,6 +3,8 @@ const DB = require("weavedb-node-client")
 const { wait, Test } = require("./lib/utils")
 const crypto = require("crypto")
 const EthCrypto = require("eth-crypto")
+const config = require("../weavedb.config")
+const nodeAdminAuth = { privateKey: config.admin }
 
 describe("rollup node", function () {
   this.timeout(0)
@@ -46,7 +48,7 @@ describe("rollup node", function () {
             owner: admin.address.toLowerCase(),
           },
         },
-        { privateKey: admin.privateKey },
+        nodeAdminAuth
       )
       expect(tx.success).to.eql(true)
       await wait(2000)
@@ -66,7 +68,7 @@ describe("rollup node", function () {
         [["allow()"]],
         COLLECTION_NAME,
         "write",
-        { privateKey: admin.privateKey },
+        { privateKey: admin.privateKey }
       )
       expect(txSetRules.success).to.eql(true)
       // console.log("getRules", await db.getRules(COLLECTION_NAME))
@@ -91,7 +93,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost1"
@@ -103,7 +105,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost2"
@@ -115,7 +117,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost3"
@@ -127,7 +129,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost4"
@@ -139,7 +141,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost5"
@@ -151,7 +153,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost6"
@@ -163,7 +165,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost7"
@@ -175,7 +177,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost8"
@@ -187,7 +189,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost9"
@@ -199,7 +201,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost10"
@@ -211,7 +213,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost11"
@@ -223,7 +225,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost12"
@@ -235,7 +237,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost13"
@@ -247,7 +249,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost14"
@@ -259,7 +261,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost15"
@@ -271,7 +273,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost16"
@@ -283,7 +285,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost17"
@@ -295,7 +297,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost18"
@@ -307,7 +309,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost19"
@@ -319,7 +321,7 @@ describe("rollup node", function () {
           const txAddPost = await db.add(
             { name: randomBytes },
             COLLECTION_NAME,
-            userAuth,
+            userAuth
           )
         }
         return "addPost20"
