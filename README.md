@@ -48,6 +48,8 @@ module.exports = {
 
 - `dir` : cache dirctory, default to `/grpc-node/node-server/cache`.
 - `dbname` : cache database name, cache will be stored in `dir/dbname`.
+- `sequencerUrl` : the Warp sequencer URL to use with SDK.
+- `apiKey` : a Warp gateway API key to use with SDK.
 - `arweave` : arweave network configuration
 - `weavedb_srcTxId` : WeaveDB contract srcTxId
 - `weavedb_version` : WeaveDB contract version
@@ -61,6 +63,8 @@ With everything included,
 module.exports = {
   dir: "/home/xyz/cache",
   dbname: "mydb",
+  sequencerUrl: "https://gw.warp.cc/",
+  apiKey: "xxxxx",
   admin: "privateky...",
   arweave: {
     host: "arweave.net",
