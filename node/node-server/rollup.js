@@ -54,6 +54,8 @@ const getNewHash = async (last_hash, current_hash) => {
 
 class Rollup {
   constructor({
+    sequencerUrl,
+    apiKey,
     txid,
     rollup = false,
     owner,
@@ -70,6 +72,8 @@ class Rollup {
     arweave,
   }) {
     this.cb = {}
+    this.sequencerUrl = sequencerUrl
+    this.apiKey = apiKey
     this.arweave = arweave
     this.recovering = false
     this.count = 0
@@ -308,11 +312,7 @@ class Rollup {
       } else {
         console.log(`WAL successfully recovered! ${this.contractTxId}`)
         // need L1 copy and L2 copy
-        const _arweave = arweave.init({
-          host: "arweave.net",
-          port: 443,
-          protocol: "https",
-        })
+        const _arweave = arweave.init(this.arweave)
         const bundler = await _arweave.wallets.jwkToAddress(this.bundler)
         const state = {
           ...{
@@ -492,6 +492,8 @@ class Rollup {
       id: this.count,
       op: "init",
       opt: {
+        sequencerUrl: this.sequencerUrl,
+        apiKey: this.apiKey,
         arweave: this.arweave,
         contractTxId: this.contractTxId,
         bundler: this.bundler,
