@@ -37,6 +37,8 @@ class Rollup {
     rollup,
     initial_state = {},
     arweave,
+    sequencerUrl,
+    apiKey,
   }) {
     this.cb = {}
     this.txid = txid
@@ -52,6 +54,8 @@ class Rollup {
     this.db.send({
       op: "new",
       params: {
+        sequencerUrl,
+        apiKey,
         arweave,
         txid,
         secure,
@@ -104,6 +108,8 @@ class VM {
   }
   getRollup(v, txid) {
     return new Rollup({
+      sequencerUrl: this.conf.sequencerUrl,
+      apiKey: this.conf.apiKey,
       arweave: this.conf.arweave,
       txid,
       secure: v.secure ?? this.conf.secure,
@@ -361,6 +367,8 @@ class VM {
             const tx = await this.admin_db.set(db, "dbs", key, auth)
             if (tx.success) {
               this.rollups[key] = new Rollup({
+                sequencerUrl: this.conf.sequencerUrl,
+                apiKey: this.conf.apiKey,
                 arweave: this.conf.arweave,
                 txid: key,
                 secure: db.secure ?? this.conf.secure,
