@@ -64,6 +64,8 @@ const wait = ms => {
 
 class Test {
   constructor({
+    sequencerUrl,
+    apiKey,
     secure = true,
     weavedb_version,
     weavedb_srcTxId,
@@ -72,6 +74,8 @@ class Test {
     admin,
     network,
   }) {
+    this.sequencerUrl = sequencerUrl
+    this.apiKey = apiKey
     this.admin = admin
     this.bundler = bundler
     this.secure = secure
@@ -131,6 +135,8 @@ class Test {
   }
   async startVM() {
     this.conf = {
+      sequencerUrl: this.sequencerUrl,
+      apiKey: this.apiKey,
       secure: this.secure,
       weavedb_srcTxId: this.weavedb_srcTxId,
       weavedb_version: this.weavedb_version,

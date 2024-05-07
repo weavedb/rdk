@@ -7,6 +7,8 @@ const md5 = require("md5")
 
 class Syncer {
   constructor({
+    sequencerUrl,
+    apiKey,
     contractTxId,
     bundler,
     dir,
@@ -18,6 +20,8 @@ class Syncer {
       protocol: "https",
     },
   }) {
+    this.sequencerUrl = sequencerUrl
+    this.apiKey = apiKey
     this.arweave = arweave
     this.partial_recovery = false
     this.full_recovery = false
@@ -31,6 +35,8 @@ class Syncer {
   async init() {
     console.log(`contractTxId: ${this.contractTxId}`)
     this.warp = new Warp({
+      sequencerUrl: this.sequencerUrl,
+      apiKey: this.apiKey,
       arweave: this.arweave,
       logLevel: "none",
       lmdb: { dir: path.resolve(this.dir, "warp") },
