@@ -9,7 +9,11 @@ describe("rollup node", function () {
 
   before(async () => {
     // testing in insecure mode, never do that in production
-    test = new Test({ secure: false })
+    test = new Test({
+      secure: false,
+      sequencerUrl: "https://gw.warp.cc/",
+      apiKey: "xyz",
+    })
     ;({ network, bundler, admin } = await test.start())
     await wait(3000)
   })
