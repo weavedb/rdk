@@ -55,7 +55,12 @@ module.exports = {
 - `weavedb_version` : WeaveDB contract version
 - `nostr` : enable WebSocket for Nostr, this turns the node into a Nostr relay.
   - `db` : the database name for Nostr events, there can be only one DB instance to receive Nostr events.
-
+- `snapshot` : config to store snapshots to GCP/S3.
+  - `count` : the number of bundles between snapshots (default to `100`).
+  - `gcp` : GCP configurations
+    - `bucket` : `[projectId].appspot.com`
+	- `keyFilename` : `gcs.json`
+  - `s3` : S3 configurations
 
 With everything included,
 
@@ -65,6 +70,10 @@ module.exports = {
   dbname: "mydb",
   sequencerUrl: "https://gw.warp.cc/",
   apiKey: "xxxxx",
+  snapshot:{
+    count: 100,
+    gcs: { bucket: "xyz.appspot.com", keyFilename: "gcs.json" }
+  },
   admin: "privateky...",
   arweave: {
     host: "arweave.net",
