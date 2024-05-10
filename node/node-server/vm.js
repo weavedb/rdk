@@ -154,16 +154,35 @@ class VM {
         if (isNil(dbs[k])) await this.admin_db.set(rollups[k], "dbs", k, auth)
       }
       for (let k in dbs) rollups[k] = dbs[k].data
+
       for (let k in rollups) {
-        if (!isNil(rollups[k].contractTxId)) {
-          this.txid_map[rollups[k].contractTxId] = k
+        const ru = rollups[k]
+        const contractTxId = ru.contractTxId
+        if (!isNil(contractTxId)) {
+          this.txid_map[contractTxId] = k
+          const dbname = ru.dbname ?? this.conf.dbname
+          const dir = path.resolve(
+            ru.dir ?? this.conf.dir ?? path.resolve(__dirname, "cache"),
+            dbname,
+            k,
+          )
+          await this.checkSnapShot({ dbname, dir, contractTxId })
         }
-        this.rollups[k] = this.getRollup(rollups[k], k)
+        this.rollups[k] = this.getRollup(ru, k)
         this.rollups[k].init()
       }
     })
   }
-
+  async checkSnapShot({ dbname, contractTxId, dir }) {
+    if (isNil(this.conf.snapshot)) return
+    const snapshot = new Snapshot({ ...this.conf.snapshot, dir })
+    try {
+      await snapshot.recover(contractTxId)
+      console.log("snapshot found", contractTxId)
+    } catch (e) {
+      console.log(e)
+    }
+  }
   parseQuery(call, callback) {
     const res = (err, result = null) => {
       callback(null, {
@@ -369,6 +388,7 @@ class VM {
               return
             }
             const tx = await this.admin_db.set(db, "dbs", key, auth)
+
             if (db.contractTxId) {
               const dbname = db.dbname ?? this.conf.dbname
               const dir = path.resolve(
@@ -376,13 +396,11 @@ class VM {
                 dbname,
                 key,
               )
-              const snapshot = new Snapshot({ ...this.conf.snapshot, dir })
-              try {
-                await snapshot.recover(db.contractTxId)
-                console.log("snapshot found", db.contractTxId)
-              } catch (e) {
-                console.log(e)
-              }
+              await this.checkSnapShot({
+                dbname,
+                dir,
+                contractTxId: db.contractTxId,
+              })
             }
             if (tx.success) {
               this.rollups[key] = new Rollup({
