@@ -64,6 +64,7 @@ const wait = ms => {
 
 class Test {
   constructor({
+    snapshot,
     sequencerUrl,
     apiKey,
     secure = true,
@@ -74,6 +75,7 @@ class Test {
     admin,
     network,
   }) {
+    this.snapshot = snapshot
     this.sequencerUrl = sequencerUrl
     this.apiKey = apiKey
     this.admin = admin
@@ -135,6 +137,7 @@ class Test {
   }
   async startVM() {
     this.conf = {
+      snapshot: this.snapshot,
       sequencerUrl: this.sequencerUrl,
       apiKey: this.apiKey,
       secure: this.secure,
@@ -182,17 +185,21 @@ class Test {
   }
   deleteCache() {
     try {
-      rmSync(resolve(__dirname, "../cache", this.dbname), {
+      rmSync(resolve(__dirname, "../../cache", this.dbname), {
         recursive: true,
         force: true,
       })
-    } catch (e) {}
+    } catch (e) {
+      console.log(e)
+    }
     try {
-      rmSync(resolve(__dirname, "../backup", this.dbname), {
+      rmSync(resolve(__dirname, "../../backup", this.dbname), {
         recursive: true,
         force: true,
       })
-    } catch (e) {}
+    } catch (e) {
+      console.log(e)
+    }
   }
   async stopArLocal() {
     await this.arLocal.stop()

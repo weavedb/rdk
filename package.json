@@ -6,5 +6,6 @@
   "scripts": {
     "run-rollup": "cd node && sudo docker-compose -f docker-compose.yml up --build",
     "envoy": "cd node && sudo docker-compose -f envoy-local.yml up --build"
-  }
+  },
+  "dependencies": {}
 }

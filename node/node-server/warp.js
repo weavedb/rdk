@@ -4,7 +4,7 @@ const path = require("path")
 const { map, sortBy, prop, path: _path, isNil, keys } = require("ramda")
 const pako = require("pako")
 const md5 = require("md5")
-
+const Snapshot = require("./lib/snapshot")
 class Syncer {
   constructor({
     sequencerUrl,
@@ -19,6 +19,7 @@ class Syncer {
       port: 443,
       protocol: "https",
     },
+    snapshot,
   }) {
     this.sequencerUrl = sequencerUrl
     this.apiKey = apiKey
@@ -30,6 +31,15 @@ class Syncer {
     this.bundler = bundler
     this.dir = dir
     this.dir_backup = dir_backup
+    this.tx_count = 0
+    if (!isNil(snapshot)) {
+      this.snapshot_count = snapshot.count ?? 100
+      this.snapshot = new Snapshot({
+        ...snapshot,
+        dir: this.dir,
+      })
+    }
+
     console.log("syncer...", this.dir, this.dir_backup)
   }
   async init() {
@@ -39,7 +49,7 @@ class Syncer {
       apiKey: this.apiKey,
       arweave: this.arweave,
       logLevel: "none",
-      lmdb: { dir: path.resolve(this.dir, "warp") },
+      lmdb: { dir: this.dir },
       type: 3,
       contractTxId: this.contractTxId,
       remoteStateSyncEnabled: false,
@@ -140,7 +150,7 @@ class Syncer {
         this.full_recovery = false
         this.full_recovery_failure = false
         try {
-          rmSync(path.resolve(this.dir_backup, "warp"), {
+          rmSync(this.dir_backup, {
             recursive: true,
             force: true,
           })
@@ -148,13 +158,9 @@ class Syncer {
           console.log(e)
         }
         try {
-          cpSync(
-            path.resolve(this.dir, "warp"),
-            path.resolve(this.dir_backup, "warp"),
-            {
-              recursive: true,
-            },
-          )
+          cpSync(this.dir, this.dir_backup, {
+            recursive: true,
+          })
         } catch (e) {
           //console.log(e)
         }
@@ -174,7 +180,7 @@ class Syncer {
       return false
     }
     try {
-      rmSync(path.resolve(this.dir, "warp"), { recursive: true, force: true })
+      rmSync(this.dir, { recursive: true, force: true })
     } catch (e) {
       console.log(e)
     }
@@ -183,8 +189,8 @@ class Syncer {
       console.log("partial recovery")
       try {
         cpSync(
-          path.resolve(this.dir_backup, "warp"),
-          path.resolve(this.dir, "warp"),
+          this.dir_backup,
+          this.dir,
 
           {
             recursive: true,
@@ -241,6 +247,24 @@ process.on("message", async msg => {
           id,
           result: { err, results, success, state },
         })
+        if (success && results.length > 0) {
+          syncer.tx_count += 1
+          try {
+            if (
+              !isNil(syncer.snapshot) &&
+              syncer.tx_count >= syncer.snapshot_count
+            ) {
+              await syncer.snapshot.save(syncer.contractTxId)
+              console.log(
+                "snapshot successfully backed up!",
+                syncer.contractTxId,
+              )
+              syncer.tx_count = 0
+            }
+          } catch (e) {
+            console.log(e)
+          }
+        }
       },
     })
   } else if (op === "recover") {

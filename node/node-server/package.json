@@ -38,10 +38,11 @@
     "warp-contracts-plugin-deploy": "1.0.3",
     "weavedb-node-client": "^0.40.0",
     "weavedb-offchain": "^0.40.3",
-    "weavedb-sdk-node": "^0.40.2",
+    "weavedb-sdk-node": "^0.40.3",
     "weavedb-warp-contracts-plugin-deploy": "^1.0.10",
     "ws": "^8.14.2",
-    "yargs": "^17.6.2"
+    "yargs": "^17.6.2",
+    "zkjson": "^0.1.31"
   },
   "devDependencies": {
     "arlocal": "^1.1.65",

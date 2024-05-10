@@ -2,6 +2,7 @@ const Arweave = require("arweave")
 const SDK = require("weavedb-node-client")
 const { Wallet, isAddress } = require("ethers")
 const { validate } = require("./lib/validate")
+const Snapshot = require("./lib/snapshot")
 const {
   indexBy,
   prop,
@@ -39,6 +40,7 @@ class Rollup {
     arweave,
     sequencerUrl,
     apiKey,
+    snapshot,
   }) {
     this.cb = {}
     this.txid = txid
@@ -54,6 +56,7 @@ class Rollup {
     this.db.send({
       op: "new",
       params: {
+        snapshot,
         sequencerUrl,
         apiKey,
         arweave,
@@ -108,6 +111,7 @@ class VM {
   }
   getRollup(v, txid) {
     return new Rollup({
+      snapshot: this.conf.snapshot,
       sequencerUrl: this.conf.sequencerUrl,
       apiKey: this.conf.apiKey,
       arweave: this.conf.arweave,
@@ -365,8 +369,24 @@ class VM {
               return
             }
             const tx = await this.admin_db.set(db, "dbs", key, auth)
+            if (db.contractTxId) {
+              const dbname = db.dbname ?? this.conf.dbname
+              const dir = path.resolve(
+                db.dir ?? this.conf.dir ?? path.resolve(__dirname, "cache"),
+                dbname,
+                key,
+              )
+              const snapshot = new Snapshot({ ...this.conf.snapshot, dir })
+              try {
+                await snapshot.recover(db.contractTxId)
+                console.log("snapshot found", db.contractTxId)
+              } catch (e) {
+                console.log(e)
+              }
+            }
             if (tx.success) {
               this.rollups[key] = new Rollup({
+                snapshot: this.conf.snapshot,
                 sequencerUrl: this.conf.sequencerUrl,
                 apiKey: this.conf.apiKey,
                 arweave: this.conf.arweave,

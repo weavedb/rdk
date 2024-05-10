@@ -1,4 +1,6 @@
+const { DB: ZKDB } = require("zkjson")
 const pako = require("pako")
+const fs = require("fs")
 const md5 = require("md5")
 const { cpSync, rmSync } = require("fs")
 const {
@@ -70,7 +72,9 @@ class Rollup {
     bundler,
     contractTxId,
     arweave,
+    snapshot,
   }) {
+    this.snapshot = snapshot
     this.cb = {}
     this.sequencerUrl = sequencerUrl
     this.apiKey = apiKey
@@ -300,6 +304,7 @@ class Rollup {
     console.log(`Owner Account: ${this.owner}`)
     await this.initWAL()
     await this.initOffchain()
+    await this.initZKDB()
     await this.initWarp()
     await this.initPlugins()
   }
@@ -492,6 +497,7 @@ class Rollup {
       id: this.count,
       op: "init",
       opt: {
+        snapshot: this.snapshot,
         sequencerUrl: this.sequencerUrl,
         apiKey: this.apiKey,
         arweave: this.arweave,
@@ -572,7 +578,22 @@ class Rollup {
       `${this.tx_count} txs has been cached: ${this.height} blocks commited`,
     )
   }
-
+  async initZKDB() {
+    this.zkdb = new ZKDB({
+      level: 100,
+      size_path: 5,
+      size_val: 5,
+      size_json: 256,
+      size_txs: 10,
+      level_col: 8,
+      wasmRU: path.resolve(__dirname, "circom/rollup/index_js/index.wasm"),
+      zkeyRU: path.resolve(__dirname, "circom/rollup/index_0001.zkey"),
+      wasm: path.resolve(__dirname, "circom/db/index_js/index.wasm"),
+      zkey: path.resolve(__dirname, "circom/db/index_0001.zkey"),
+    })
+    await this.zkdb.init()
+    const col_id = await this.zkdb.addCollection()
+  }
   async initOffchain() {
     let state = {
       ...{
@@ -603,7 +624,16 @@ class Rollup {
         },
         onWrite: async (tx, obj, param) => {
           let prs = [obj.lmdb.put("state", tx.state)]
+          let diff = []
           for (const k in tx.result.kvs) {
+            if (k.split("///")[1]?.split("/")[0] === "data") {
+              let sps = k.split("///")
+              diff.push({
+                collection: sps[0],
+                doc: k.split("///")[1]?.split("/")[1],
+                data: tx.result.kvs[k].val,
+              })
+            }
             this.kvs[k] = tx.result.kvs[k]
             prs.push(obj.lmdb.put(k, tx.result.kvs[k]))
           }
@@ -616,12 +646,39 @@ class Rollup {
             input: param,
             docID: tx.result.docID,
             doc: tx.result.doc,
+            diff,
           }
           if (this.recovering && !isNil(this.recovery_map[t.txid])) {
             t = mergeLeft(this.recovery_map[t.txid], t)
           }
-          this.wal.set(t, "txs", `${t.id}`).then(res => {
+          this.wal.set(t, "txs", `${t.id}`).then(async res => {
             if (!res.success) console.log("wal error")
+            /*
+            if (diff.length > 0) {
+              if (this.txid === "testdb") {
+                for (const v of diff) {
+                const res = await this.zkdb.insert(0, v.doc, v.data)
+                }
+
+              let txs = diff.map(v => {
+                return [0, v.doc, v.data]
+              })
+              console.log(txs)
+              const start = Date.now()
+              const zkp = await this.zkdb.genRollupProof(txs)
+              console.log("zkp generated...", Date.now() - start)
+              const start2 = Date.now()
+              console.log("this is diff", diff[0].data)
+              const zkp2 = await this.zkdb.genProof({
+                json: diff[0].data,
+                col_id: 0,
+                path: "age",
+                id: "bob",
+              })
+              console.log("zkp generated2...", Date.now() - start2)
+              }
+              
+            }*/
           })
           this.last = Date.now()
           for (let k in this.plugins) {
