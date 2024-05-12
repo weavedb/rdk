@@ -48,7 +48,7 @@ class Syncer {
       sequencerUrl: this.sequencerUrl,
       apiKey: this.apiKey,
       arweave: this.arweave,
-      logLevel: "none",
+      logLevel: "error",
       lmdb: { dir: this.dir },
       type: 3,
       contractTxId: this.contractTxId,
@@ -125,6 +125,7 @@ class Syncer {
         })
     }
   }
+
   async validate({ success, err, len, results, height, res }) {
     let state = null
     if (success) {
@@ -224,6 +225,7 @@ class Syncer {
     )
   }
 }
+
 let syncer = null
 process.on("message", async msg => {
   const { op, id, opt } = msg
