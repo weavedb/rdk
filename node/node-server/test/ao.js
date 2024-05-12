@@ -101,5 +101,16 @@ describe("WeaveDB on AO", function () {
         input: { function: "get", query: ["ppl", "Bob"] },
       }),
     ).to.eql(Bob)
+
+    // get zk merkle tree hash
+    expect(await cwao.cu.hash(contractTxId)).to.eql({
+      hash: "3150676657250766603796772512965959982117188488917183624745860182828131710321",
+      height: 1,
+    })
+
+    // get zkJSON proof
+    expect(
+      (await cwao.cu.zkjson(contractTxId, "ppl", "Bob", "name")).data,
+    ).to.eql(Bob)
   })
 })
