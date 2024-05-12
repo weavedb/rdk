@@ -720,7 +720,7 @@ class Rollup {
           this.wal.set(t, "txs", `${t.id}`).then(async res => {
             if (!res.success) console.log("wal error")
             /*
-            if (diff.length > 0) {
+              if (diff.length > 0) {
               if (this.txid === "testdb") {
                 for (const v of diff) {
                 const res = await this.zkdb.insert(0, v.doc, v.data)
