@@ -8,6 +8,8 @@ const Arweave = require("arweave")
 const ArLocal = require("arlocal").default
 const { DeployPlugin } = require("warp-contracts-plugin-deploy")
 const { rmSync } = require("fs")
+const { MU, SU } = require("cwao-units")
+const CU = require("cwao-units/cu-weavedb")
 
 class Deploy {
   constructor({ warp, wallet }) {
@@ -74,7 +76,9 @@ class Test {
     bundler,
     admin,
     network,
+    ao = false,
   }) {
+    this.ao = ao
     this.snapshot = snapshot
     this.sequencerUrl = sequencerUrl
     this.apiKey = apiKey
@@ -137,6 +141,7 @@ class Test {
   }
   async startVM() {
     this.conf = {
+      ao: this.base,
       snapshot: this.snapshot,
       sequencerUrl: this.sequencerUrl,
       apiKey: this.apiKey,
@@ -155,15 +160,33 @@ class Test {
   async startServer() {
     this.server = new Server({ query: this.vm.query.bind(this.vm) })
   }
+  async startAO() {
+    const base = {
+      mu: "http://localhost:1995",
+      su: "http://localhost:1996",
+      cu: "http://localhost:1997",
+      arweave: this.network,
+      graphql: "http://localhost:1984/graphql",
+    }
+    this.base = base
+    this.mu = new MU({ wallet: this.bundler, port: 1995, ...base })
+    this.su = new SU({ wallet: this.bundler, port: 1996, ...base })
+    this.cu = new CU({ wallet: this.bundler, port: 1997, ...base })
+  }
   async start() {
     await this.startArLocal()
     await this.genBunder()
     await this.genAdmin()
     await this.deployWeaveDB()
+    await this.startAO()
     await this.startVM()
     await this.startServer()
     await wait(1000)
     return {
+      base: this.base,
+      mu: this.mu,
+      su: this.su,
+      cu: this.cu,
       dbname: this.dbname,
       network: this.network,
       arweave: this.arweave,
@@ -210,6 +233,11 @@ class Test {
     await this.stopVM()
     await this.stopArLocal()
     this.deleteCache()
+    if (this.ao) {
+      this.mu.stop()
+      this.su.stop()
+      this.cu.stop()
+    }
   }
 }
 

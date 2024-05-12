@@ -1,4 +1,5 @@
 const { DB: ZKDB } = require("zkjson")
+const { CWAO } = require("cwao")
 const pako = require("pako")
 const fs = require("fs")
 const md5 = require("md5")
@@ -57,6 +58,7 @@ const getNewHash = async (last_hash, current_hash) => {
 class Rollup {
   constructor({
     sequencerUrl,
+    ao,
     apiKey,
     txid,
     rollup = false,
@@ -73,9 +75,12 @@ class Rollup {
     contractTxId,
     arweave,
     snapshot,
+    type = "warp",
   }) {
     this.snapshot = snapshot
     this.cb = {}
+    this.type = type
+    this.ao = ao
     this.sequencerUrl = sequencerUrl
     this.apiKey = apiKey
     this.arweave = arweave
@@ -180,11 +185,58 @@ class Rollup {
                 results,
               })
             }
-            this.syncer.send({
-              id: this.count,
-              op: "bundle",
-              opt: { height: this.height, b },
-            })
+            if (this.type === "ao") {
+              const warp = new DB({
+                type: 3,
+                contractTxId: this.contractTxId,
+              })
+              let height = this.height
+              let results = []
+              let validity = {}
+              for (let v of b) {
+                const { bundles, hash, t } = v
+                const signed = await warp.sign(
+                  "bundle",
+                  map(_path(["data", "input"]))(bundles),
+                  {
+                    t,
+                    h: hash,
+                    n: ++height,
+                    parallel: true,
+                    nonce: 1,
+                    ar: this.bundler,
+                  },
+                )
+                const tx = await this.syncer.execute({
+                  process: this.contractTxId,
+                  action: "bundle",
+                  input: signed,
+                })
+                results.push({
+                  hash,
+                  height,
+                  tx: tx.result,
+                  items: v,
+                  duration: tx.result.duration,
+                })
+                validity[tx.result.originalTxId] = true
+              }
+              this.height = height
+              const state = { validity, state: { rollup: { height } } }
+              _res({
+                state,
+                success: true,
+                err: null,
+                len: b.length,
+                results,
+              })
+            } else {
+              this.syncer.send({
+                id: this.count,
+                op: "bundle",
+                opt: { height: this.height, b },
+              })
+            }
           } else {
             _res({ err: null, len: 0, success: null })
           }
@@ -474,39 +526,53 @@ class Rollup {
   }
 
   async initSyncer() {
-    if (!isNil(this.syncer)) this.syncer.kill()
-    this.syncer = fork(path.resolve(__dirname, "warp"))
-    this.syncer.on("message", async ({ err, result, id }) => {
-      if (!isNil(id)) {
-        await this.cb[id]?.(err, result)
-        delete this.cb[id]
-      }
-    })
-    this.cb[++this.count] = err => {
-      if (err) {
-        console.log(`warp unsuccessful... ${this.contractTxId}`)
-      } else {
-        console.log(`warp successfully initialized! ${this.contractTxId}`)
-        if (this.tx_count === 0) {
-          this.recoverWAL()
-        }
+    if (this.type === "ao") {
+      this.syncer = new CWAO({
+        wallet: this.bundler,
+        ...this.ao,
+      })
+      try {
+        console.log(await this.syncer.cu.get())
         this.init_warp = true
+      } catch (e) {
+        console.log("CU not responding...", this.contractTxId)
       }
+      return
+    } else {
+      if (!isNil(this.syncer)) this.syncer.kill()
+      this.syncer = fork(path.resolve(__dirname, "warp"))
+      this.syncer.on("message", async ({ err, result, id }) => {
+        if (!isNil(id)) {
+          await this.cb[id]?.(err, result)
+          delete this.cb[id]
+        }
+      })
+      this.cb[++this.count] = err => {
+        if (err) {
+          console.log(`warp unsuccessful... ${this.contractTxId}`)
+        } else {
+          console.log(`warp successfully initialized! ${this.contractTxId}`)
+          if (this.tx_count === 0) {
+            this.recoverWAL()
+          }
+          this.init_warp = true
+        }
+      }
+      this.syncer.send({
+        id: this.count,
+        op: "init",
+        opt: {
+          snapshot: this.snapshot,
+          sequencerUrl: this.sequencerUrl,
+          apiKey: this.apiKey,
+          arweave: this.arweave,
+          contractTxId: this.contractTxId,
+          bundler: this.bundler,
+          dir: this.dir,
+          dir_backup: this.dir_backup,
+        },
+      })
     }
-    this.syncer.send({
-      id: this.count,
-      op: "init",
-      opt: {
-        snapshot: this.snapshot,
-        sequencerUrl: this.sequencerUrl,
-        apiKey: this.apiKey,
-        arweave: this.arweave,
-        contractTxId: this.contractTxId,
-        bundler: this.bundler,
-        dir: this.dir,
-        dir_backup: this.dir_backup,
-      },
-    })
   }
 
   async initPlugins() {
@@ -706,7 +772,9 @@ class Rollup {
   }
 
   async initWarp() {
-    if (this.rollup && !isNil(this.contractTxId)) await this.initSyncer()
+    if (this.rollup && !isNil(this.contractTxId)) {
+      await this.initSyncer()
+    }
   }
 
   async getWAL(next = null, pdb) {
@@ -822,6 +890,8 @@ process.on("message", async msg => {
       res: (err, result) => process.send({ err, result, op, id }),
     })
   } else if (op === "deploy_contract") {
+    rollup.type = msg.type
+    rollup.ao = msg.ao
     rollup.contractTxId = msg.contractTxId
     rollup.last_hash = msg.contractTxId
     rollup.db.contractTxId = msg.contractTxId
