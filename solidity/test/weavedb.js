@@ -1,16 +1,36 @@
+const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
+const { toIndex, path } = require("zkjson")
+const { resolve } = require("path")
 const { expect } = require("chai")
-const DB = require("weavedb-node-client")
-const SDK = require("weavedb-sdk-node")
-const { wait, Test } = require("./lib/utils")
+const { wait, Test } = require("../../node/node-server/test/lib/utils")
 const { CWAO } = require("cwao")
 const { readFileSync } = require("fs")
-const { resolve } = require("path")
+const DB = require("weavedb-node-client")
+const SDK = require("weavedb-sdk-node")
 
-const getModule = async () => readFileSync(resolve(__dirname, "../contract.js"))
+const getModule = async () =>
+  readFileSync(resolve(__dirname, "../../node/node-server/contract.js"))
 
-describe("WeaveDB on AO", function () {
-  this.timeout(0)
+async function deploy() {
+  const [committer] = await ethers.getSigners()
+  const VerifierRU = await ethers.getContractFactory("Groth16VerifierRU")
+  const verifierRU = await VerifierRU.deploy()
+  const VerifierDB = await ethers.getContractFactory("Groth16VerifierDB")
+  const verifierDB = await VerifierDB.deploy()
+
+  const MyRU = await ethers.getContractFactory("SimpleOPRU")
+  const myru = await MyRU.deploy(
+    verifierRU.address,
+    verifierDB.address,
+    committer.address,
+  )
+  return { myru, committer }
+}
+
+describe("WeaveDB AO with zkJSON", function () {
+  let myru, committer, db, ru
   let admin, network, bundler, test, base, arweave
+  this.timeout(0)
 
   before(async () => {
     // testing in insecure mode, never do that in production
@@ -30,7 +50,13 @@ describe("WeaveDB on AO", function () {
     process.exit()
   })
 
-  it("should start server", async () => {
+  beforeEach(async () => {
+    const dep = await loadFixture(deploy)
+    myru = dep.myru
+    committer = dep.committer
+  })
+
+  it("should verify rollup transactions", async function () {
     const cwao = new CWAO({ wallet: bundler, ...base })
     const sch = await arweave.wallets.jwkToAddress(bundler)
     expect(await cwao.mu.get()).to.eql("ao messenger unit")
@@ -85,7 +111,7 @@ describe("WeaveDB on AO", function () {
       rpc: "localhost:9090",
       contractTxId,
     })
-    const Bob = { name: "Bob" }
+    const Bob = { name: "Bob", age: 10 }
     const tx2 = await db2.set(Bob, "ppl", "Bob", {
       privateKey: admin.privateKey,
     })
@@ -102,17 +128,23 @@ describe("WeaveDB on AO", function () {
       }),
     ).to.eql(Bob)
 
-    // get zk merkle tree hash
     try {
-      expect(await cwao.cu.hash(contractTxId)).to.eql({
-        hash: "9490062173314360716133102172838140491357233774084690229623706293601383041546",
-        height: 1,
-      })
-      console.log(await cwao.cu.zkjson(contractTxId, "ppl", "Bob", "name"))
+      // get zk merkle tree hash
+      const { hash, height } = await cwao.cu.hash(contractTxId)
+      const tx = await myru.commit(hash)
+      await tx.wait()
+
       // get zkJSON proof
+      const { zkp, col_id, doc } = await cwao.cu.zkjson(
+        contractTxId,
+        "ppl",
+        "Bob",
+        "name",
+      )
+      // query from Solidity
       expect(
-        (await cwao.cu.zkjson(contractTxId, "ppl", "Bob", "name")).data,
-      ).to.eql(Bob)
+        await myru.qString([col_id, toIndex(doc), ...path("name")], zkp),
+      ).to.eql("Bob")
     } catch (e) {
       console.log(e)
     }

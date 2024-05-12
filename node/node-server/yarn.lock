@@ -4461,10 +4461,10 @@ culvert@^0.1.2:
   resolved "https://registry.yarnpkg.com/culvert/-/culvert-0.1.2.tgz#9502f5f0154a2d5a22a023e79f71cc936fa6ef6f"
   integrity sha512-yi1x3EAWKjQTreYWeSd98431AV+IEE0qoDyOoaHJ7KJ21gv6HtBXHVLX74opVSGqcR8/AbjJBHAHpcOy2bj5Gg==
 
-cwao-units@^0.3.10:
-  version "0.3.10"
-  resolved "https://registry.yarnpkg.com/cwao-units/-/cwao-units-0.3.10.tgz#6875c4a14a05c472220a0726ff1e1cc93db014a8"
-  integrity sha512-OacichSoB9xqSqp8Q751LP6Kq/O2O6CtgCBxOFFn33M2UL31RaKRBPrVjaEcsloU3ln/IG0vGJrIsKlUqnJVJw==
+cwao-units@^0.3.11:
+  version "0.3.11"
+  resolved "https://registry.yarnpkg.com/cwao-units/-/cwao-units-0.3.11.tgz#dd25e86c67ad551c8e2cd8ca2b6a5a2abe2122ae"
+  integrity sha512-f5iuVnNqdYWy6JrjmdZKnxNOZZhufN5A+TUaiePQEuZkOjxQ22mRZXbN0Z3OuheI0x7j4kV3PVpQCGD4wqZVDw==
   dependencies:
     "@terran-one/cosmwasm-vm-js" "^0.2.16"
     arbundles "^0.11.0"
@@ -4478,6 +4478,7 @@ cwao-units@^0.3.10:
     ramda "^0.29.1"
     weavedb-node-client "^0.40.0"
     weavedb-offchain "^0.40.5"
+    zkjson "^0.1.32"
 
 cwao@^0.5.3:
   version "0.5.3"
@@ -10132,10 +10133,10 @@ zip-stream@^4.1.0:
     compress-commons "^4.1.2"
     readable-stream "^3.6.0"
 
-zkjson@^0.1.31:
-  version "0.1.31"
-  resolved "https://registry.yarnpkg.com/zkjson/-/zkjson-0.1.31.tgz#dd8e198f062924bc8a12fcb440deaac1b02f5936"
-  integrity sha512-384fFu0cKWaXBrV5hdiRnwcWGQxdMhgHPUYILSWxfQuUwc+oAyNFjY2zmjuvRWA5Ecwn0pAUj54xP7hLaVfd4Q==
+zkjson@^0.1.32:
+  version "0.1.32"
+  resolved "https://registry.yarnpkg.com/zkjson/-/zkjson-0.1.32.tgz#93dbd6a0e4f17c9c73580a6a352b41e9185a3029"
+  integrity sha512-+W89XZbU1Bzr/Sa7n9VNhR9l1OX4SvoesY8hf4epxqcF53cg3FkZXiFVJ7r077Tl5/EFYnUQBYarUg8U3sGgZA==
   dependencies:
     blake-hash "^2.0.0"
     blake2b "^2.1.3"
