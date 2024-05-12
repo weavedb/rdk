@@ -1,4 +1,4 @@
-circom/
+circuits/
 node_modules/
 package-lock.json
 cache/
