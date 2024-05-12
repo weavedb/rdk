@@ -171,7 +171,15 @@ class Test {
     this.base = base
     this.mu = new MU({ wallet: this.bundler, port: 1995, ...base })
     this.su = new SU({ wallet: this.bundler, port: 1996, ...base })
-    this.cu = new CU({ wallet: this.bundler, port: 1997, ...base })
+    this.cu = new CU({
+      wallet: this.bundler,
+      port: 1997,
+      ...base,
+      wasmRU: resolve(__dirname, "../../circom/rollup/index_js/index.wasm"),
+      zkeyRU: resolve(__dirname, "../../circom/rollup/index_0001.zkey"),
+      wasm: resolve(__dirname, "../../circom/db/index_js/index.wasm"),
+      zkey: resolve(__dirname, "../../circom/db/index_0001.zkey"),
+    })
   }
   async start() {
     await this.startArLocal()
