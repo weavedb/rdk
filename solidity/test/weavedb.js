@@ -128,25 +128,20 @@ describe("WeaveDB AO with zkJSON", function () {
       }),
     ).to.eql(Bob)
 
-    try {
-      // get zk merkle tree hash
-      const { hash, height } = await cwao.cu.hash(contractTxId)
-      const tx = await myru.commit(hash)
-      await tx.wait()
+    // get zk merkle tree hash
+    const { hash, height } = await cwao.cu.hash(contractTxId)
+    await myru.commit(hash)
 
-      // get zkJSON proof
-      const { zkp, col_id, doc } = await cwao.cu.zkjson(
-        contractTxId,
-        "ppl",
-        "Bob",
-        "name",
-      )
-      // query from Solidity
-      expect(
-        await myru.qString([col_id, toIndex(doc), ...path("name")], zkp),
-      ).to.eql("Bob")
-    } catch (e) {
-      console.log(e)
-    }
+    // get zkJSON proof
+    const { zkp, col_id, doc } = await cwao.cu.zkjson(
+      contractTxId,
+      "ppl",
+      "Bob",
+      "name",
+    )
+    // query from Solidity
+    expect(
+      await myru.qString([col_id, toIndex(doc), ...path("name")], zkp),
+    ).to.eql("Bob")
   })
 })
