@@ -4461,10 +4461,10 @@ culvert@^0.1.2:
   resolved "https://registry.yarnpkg.com/culvert/-/culvert-0.1.2.tgz#9502f5f0154a2d5a22a023e79f71cc936fa6ef6f"
   integrity sha512-yi1x3EAWKjQTreYWeSd98431AV+IEE0qoDyOoaHJ7KJ21gv6HtBXHVLX74opVSGqcR8/AbjJBHAHpcOy2bj5Gg==
 
-cwao-units@^0.3.8:
-  version "0.3.8"
-  resolved "https://registry.yarnpkg.com/cwao-units/-/cwao-units-0.3.8.tgz#39380d1569d3ced3718f23b7c45f88678e8667e5"
-  integrity sha512-1cVBsTgPVccYP1xqBrtO7ddEdSvTwl4MX/Z64mYABPo+sZKO5eZy+G8KrUgBa9nhNHURTleziSHxFfr/lVTh4w==
+cwao-units@^0.3.9:
+  version "0.3.9"
+  resolved "https://registry.yarnpkg.com/cwao-units/-/cwao-units-0.3.9.tgz#4a76731652907d97ddc93a9234e10761315da900"
+  integrity sha512-nsyYAQh1eBdmRLiA6yRTxUYGwwolxwzmukRnm5Q3v131s6lE2m6iylOr90tc7BckwEL9NbhjI+rLnRr8bIMrdA==
   dependencies:
     "@terran-one/cosmwasm-vm-js" "^0.2.16"
     arbundles "^0.11.0"
