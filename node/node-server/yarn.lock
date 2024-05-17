@@ -4461,10 +4461,10 @@ culvert@^0.1.2:
   resolved "https://registry.yarnpkg.com/culvert/-/culvert-0.1.2.tgz#9502f5f0154a2d5a22a023e79f71cc936fa6ef6f"
   integrity sha512-yi1x3EAWKjQTreYWeSd98431AV+IEE0qoDyOoaHJ7KJ21gv6HtBXHVLX74opVSGqcR8/AbjJBHAHpcOy2bj5Gg==
 
-cwao-units@^0.3.11:
-  version "0.3.11"
-  resolved "https://registry.yarnpkg.com/cwao-units/-/cwao-units-0.3.11.tgz#dd25e86c67ad551c8e2cd8ca2b6a5a2abe2122ae"
-  integrity sha512-f5iuVnNqdYWy6JrjmdZKnxNOZZhufN5A+TUaiePQEuZkOjxQ22mRZXbN0Z3OuheI0x7j4kV3PVpQCGD4wqZVDw==
+cwao-units@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/cwao-units/-/cwao-units-0.4.0.tgz#9b08295dab735181887f1b84d79c8e8d930fe04c"
+  integrity sha512-hR7EF7U5GjOvklsCCrGHepylbi2Iw55f5I8GauWS+64rgiIlz9Opy2X3s9/qRESFRQWih4FseVQ4M+EJ2Ct/fw==
   dependencies:
     "@terran-one/cosmwasm-vm-js" "^0.2.16"
     arbundles "^0.11.0"
@@ -4473,26 +4473,17 @@ cwao-units@^0.3.11:
     base64url "^3.0.1"
     bech32 "^2.0.0"
     cors "^2.8.5"
-    cwao "^0.5.3"
+    cwao "^0.5.5"
     express "^4.18.2"
     ramda "^0.29.1"
     weavedb-node-client "^0.40.0"
     weavedb-offchain "^0.40.5"
     zkjson "^0.1.32"
 
-cwao@^0.5.3:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/cwao/-/cwao-0.5.3.tgz#194fd5a035a662af24a1c6c04ce93341785fb670"
-  integrity sha512-J6kXrxQmGtlho68oXZiLCsa3yaAwYkIr8WVk3kUgH/2eZgntuO72njiGnutqpBVqSSCUFj/qN2Z47610664Gjg==
-  dependencies:
-    arbundles "^0.11.0"
-    arweave "^1.15.0"
-    ramda "^0.29.1"
-
-cwao@^0.5.4:
-  version "0.5.4"
-  resolved "https://registry.yarnpkg.com/cwao/-/cwao-0.5.4.tgz#99555b9732479941286871b11cb1ceb547ca72f4"
-  integrity sha512-Fv4C+6eEdO66ozdNYl4QasACQvo81nvQ8WcDFV9UvUNNK5PN8vR3gbHosqRi6pbW4PY7ZrB8NRcNqS90C2u5eQ==
+cwao@^0.5.5:
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/cwao/-/cwao-0.5.5.tgz#fabeb337cad0d16f3899b73927fb139969d7e75f"
+  integrity sha512-CbI2XPN2R2uwKsuJj5oWxm9X7NQJSnslW1rZ5HU2M09NY7R2CmCjWCQSgtTmO2hPs9okuAxn318GoMSh60EVyw==
   dependencies:
     arbundles "^0.11.0"
     arweave "^1.15.0"
