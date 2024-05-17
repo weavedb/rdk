@@ -8,8 +8,8 @@ const Arweave = require("arweave")
 const ArLocal = require("arlocal").default
 const { DeployPlugin } = require("warp-contracts-plugin-deploy")
 const { rmSync } = require("fs")
-const { MU, SU } = require("cwao-units")
-const CU = require("cwao-units/cu-weavedb")
+const { CU, MU, SU } = require("cwao-units")
+const CUWDB = require("cwao-units/cu-weavedb")
 
 class Deploy {
   constructor({ warp, wallet }) {
@@ -77,8 +77,10 @@ class Test {
     admin,
     network,
     ao = false,
+    cosmwasm = false,
   }) {
     this.ao = ao
+    this.cosmwasm = cosmwasm
     this.snapshot = snapshot
     this.sequencerUrl = sequencerUrl
     this.apiKey = apiKey
@@ -118,6 +120,12 @@ class Test {
       await this.addFunds(this.bundler)
     } else {
       console.log("bundler already exists")
+    }
+    if (!this.bundler2) {
+      this.bundler2 = await this.arweave.wallets.generate()
+      await this.addFunds(this.bundler2)
+    } else {
+      console.log("bundler2 already exists")
     }
   }
   async genAdmin() {
@@ -171,7 +179,7 @@ class Test {
     this.base = base
     this.mu = new MU({ wallet: this.bundler, port: 1995, ...base })
     this.su = new SU({ wallet: this.bundler, port: 1996, ...base })
-    this.cu = new CU({
+    this.cu = new CUWDB({
       wallet: this.bundler,
       port: 1997,
       ...base,
@@ -181,24 +189,49 @@ class Test {
       zkey: resolve(__dirname, "../../circuits/db/index_0001.zkey"),
     })
   }
+
+  async startCW() {
+    const base = {
+      mu: "http://localhost:1975",
+      su: "http://localhost:1976",
+      cu: "http://localhost:1977",
+      arweave: this.network,
+      graphql: "http://localhost:1984/graphql",
+    }
+    this.base_cw = base
+    this.mu_cw = new MU({ wallet: this.bundler2, port: 1975, ...base })
+    this.su_cw = new SU({ wallet: this.bundler2, port: 1976, ...base })
+    this.cu_cw = new CU({
+      wallet: this.bundler2,
+      port: 1977,
+      ...base,
+    })
+  }
+
   async start() {
     await this.startArLocal()
     await this.genBunder()
     await this.genAdmin()
     await this.deployWeaveDB()
-    await this.startAO()
+    if (this.ao) await this.startAO()
+    if (this.cosmwasm) await this.startCW()
     await this.startVM()
     await this.startServer()
     await wait(1000)
     return {
       base: this.base,
+      base_cw: this.base_cw,
       mu: this.mu,
       su: this.su,
       cu: this.cu,
+      mu_cw: this.mu_cw,
+      su_cw: this.su_cw,
+      cu_cw: this.cu_cw,
       dbname: this.dbname,
       network: this.network,
       arweave: this.arweave,
       bundler: this.bundler,
+      bundler2: this.bundler2,
       admin: this.admin,
       arLocal: this.arLocal,
       contracts: this.contracts,
@@ -245,6 +278,11 @@ class Test {
       this.mu.stop()
       this.su.stop()
       this.cu.stop()
+    }
+    if (this.cosmwasm) {
+      this.mu_cw.stop()
+      this.su_cw.stop()
+      this.cu_cw.stop()
     }
   }
 }
