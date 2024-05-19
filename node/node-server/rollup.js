@@ -193,8 +193,10 @@ class Rollup {
               let height = this.height
               let results = []
               let validity = {}
+              let _hash = this.last_hash
               for (let v of b) {
                 const { bundles, hash, t } = v
+                _hash = hash
                 const signed = await warp.sign(
                   "bundle",
                   map(_path(["data", "input"]))(bundles),
@@ -222,6 +224,7 @@ class Rollup {
                 validity[tx.result.originalTxId] = true
               }
               this.height = height
+              this.last_hash = _hash
               const state = { validity, state: { rollup: { height } } }
               _res({
                 state,
