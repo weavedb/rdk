@@ -5,6 +5,7 @@ const { validate } = require("./lib/validate")
 const Snapshot = require("./lib/snapshot")
 const { CWAO } = require("cwao")
 const {
+  all,
   indexBy,
   prop,
   concat,
@@ -267,7 +268,7 @@ class VM {
               } else {
                 type ??= "warp"
                 let initialState = {
-                  version: this.conf.weavedb_version ?? "0.40.0",
+                  version: this.conf.weavedb_version ?? "0.41.0",
                   canEvolve: true,
                   evolve: null,
                   secure: _db.secure ?? this.conf.secure,
@@ -288,6 +289,12 @@ class VM {
                   },
                   contracts: {},
                   triggers: {},
+                  tokens: {
+                    available: {},
+                    available_l2: {},
+                    locked: {},
+                    allocated: {},
+                  },
                 }
                 const _arweave = this.conf.arweave ?? {
                   host: "arweave.net",
@@ -433,7 +440,11 @@ class VM {
               return
             } else if (isNil(db.owner)) {
               callback(null, { result: null, err: "owner is missing" })
-            } else if (!isAddress(db.owner)) {
+            } else if (
+              Array.isArray(db.owner)
+                ? !all(isAddress)(db.owner)
+                : !isAddress(db.owner)
+            ) {
               callback(null, {
                 result: null,
                 err: "owner is not a valid EVM address",
