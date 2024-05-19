@@ -75,6 +75,7 @@ class Test {
     dbname,
     bundler,
     admin,
+    admin_l1,
     network,
     ao = false,
     cosmwasm = false,
@@ -85,6 +86,7 @@ class Test {
     this.sequencerUrl = sequencerUrl
     this.apiKey = apiKey
     this.admin = admin
+    this.admin_l1 = admin_l1
     this.bundler = bundler
     this.secure = secure
     this.weavedb_srcTxId = weavedb_srcTxId
@@ -134,6 +136,11 @@ class Test {
     } else {
       console.log("admin already exists")
     }
+    if (!this.admin_l1) {
+      this.admin_l1 = EthCrypto.createIdentity()
+    } else {
+      console.log("L2 admin already exists")
+    }
   }
   async deployWeaveDB() {
     if (!this.weavedb_srcTxId) {
@@ -159,6 +166,7 @@ class Test {
       arweave: this.network,
       dbname: this.dbname,
       admin: this.admin.privateKey,
+      admin_l1: this.admin_l1.privateKey,
       bundler: this.bundler,
       rollups: {},
       contracts: this.contracts,
@@ -233,6 +241,7 @@ class Test {
       bundler: this.bundler,
       bundler2: this.bundler2,
       admin: this.admin,
+      admin_l1: this.admin_l1,
       arLocal: this.arLocal,
       contracts: this.contracts,
       weavedb_srcTxId: this.weavedb_srcTxId,
