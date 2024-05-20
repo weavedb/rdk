@@ -139,6 +139,7 @@ describe("WeaveDB AO with zkJSON", function () {
       "Bob",
       "name",
     )
+
     // query from Solidity
     expect(
       await myru.qString([col_id, toIndex(doc), ...path("name")], zkp),

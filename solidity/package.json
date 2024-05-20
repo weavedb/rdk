@@ -21,10 +21,10 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
-    "cwao": "^0.5.4",
+    "cwao": "^0.5.5",
     "snarkjs": "^0.7.2",
-    "weavedb-node-client": "^0.40.0",
-    "weavedb-sdk-node": "^0.40.3",
+    "weavedb-node-client": "^0.41.0",
+    "weavedb-sdk-node": "^0.41.0",
     "zkjson": "^0.1.32"
   },
   "license": "MIT"
