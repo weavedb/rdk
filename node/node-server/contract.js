@@ -10876,8 +10876,9 @@ var require_utils = __commonJS({
       !isNil(state.evolveHistory) &&
       !isNil(last(state.evolveHistory)) &&
       isNil(last(state.evolveHistory).newVersion)
-    var genId = async (action, salt, SmartWeave2) =>
-      md5(JSON.stringify(action.input))
+    var genId = async (action, salt, SmartWeave2) => {
+      return md5(JSON.stringify(action.input))
+    }
     var isOwner = (signer, state) => {
       let owner = state.owner || []
       if (is(String)(owner)) owner = of(owner)
