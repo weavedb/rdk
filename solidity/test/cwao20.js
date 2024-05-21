@@ -29,11 +29,17 @@ async function deploy() {
     verifierDB.address,
     committer.address,
   )
-  return { myru, committer }
+
+  const Token = await ethers.getContractFactory("Token")
+  const mytoken = await Token.deploy()
+  const ZKBridge = await ethers.getContractFactory("ZKBridge")
+  const bridge = await ZKBridge.deploy(myru.address, mytoken.address)
+
+  return { myru, committer, mytoken, bridge }
 }
 
 describe("WeaveDB AO with zkJSON", function () {
-  let myru, committer, db, ru
+  let myru, committer, db, ru, bridge, mytoken
   let admin, network, bundler, test, base, arweave, admin_l1, base_cw, bundler2
   this.timeout(0)
 
@@ -61,6 +67,8 @@ describe("WeaveDB AO with zkJSON", function () {
     const dep = await loadFixture(deploy)
     myru = dep.myru
     committer = dep.committer
+    mytoken = dep.mytoken
+    bridge = dep.bridge
   })
 
   it("should verify rollup transactions", async function () {
@@ -299,37 +307,58 @@ describe("WeaveDB AO with zkJSON", function () {
         ])
       )[0].withdraw,
     ).to.eql(5)
-    await db2.withdrawToken({ token: pr.id, to: sch }, ath(cu2))
-    expect((await db2.getTokens()).tokens.allocated[pr.id]).to.eql("5")
-    await wait(5000)
-    expect(
-      await token.query({
-        process: pr.id,
-        action: "Balance",
-        input: { Target: sch },
-      }),
-    ).to.eql({ Balance: "5", Ticker: "WDB" })
-
     try {
+      const tx = await db2.bridgeToken(
+        {
+          token: pr.id,
+          to: cu2.address.toLowerCase(),
+          amount: 2,
+          destination: "ethereum",
+        },
+        ath(cu2),
+      )
+      await db2.withdrawToken({ token: pr.id, to: sch }, ath(cu2))
+      expect((await db2.getTokens()).tokens.allocated[pr.id]).to.eql("5")
       await wait(5000)
-      const tk = (await db2.cget("__tokens__", ["amount", "desc"]))[0]
+
+      expect(
+        await token.query({
+          process: pr.id,
+          action: "Balance",
+          input: { Target: sch },
+        }),
+      ).to.eql({ Balance: "3", Ticker: "WDB" })
+
+      await wait(5000)
       // get zk merkle tree hash
       const { hash, height } = await wdb.cu.hash(contractTxId)
       await myru.commit(hash)
 
+      const tk = (await db2.cget("__bridge__"))[0]
+
       // get zkJSON proof
       const { zkp, col_id, doc } = await wdb.cu.zkjson(
         contractTxId,
-        "__tokens__",
+        "__bridge__",
+        tk.id,
+        "to",
+      )
+
+      const { zkp: zkp2 } = await wdb.cu.zkjson(
+        contractTxId,
+        "__bridge__",
         tk.id,
         "amount",
       )
-      // query from Solidity
-      expect(
-        (
-          await myru.qInt([1, toIndex(tk.id), ...path("amount")], zkp)
-        ).toNumber(),
-      ).to.eql(tk.data.amount)
+
+      // bridge token to Ethereum
+      const sigs = zkp.slice(8)
+      const _col = sigs[12]
+      const _doc = sigs[13]
+
+      await bridge.bridge(_col, _doc, zkp, zkp2)
+
+      expect((await mytoken.balanceOf(tk.data.to)).toNumber()).to.eql(2)
     } catch (e) {
       console.log(e)
     }
