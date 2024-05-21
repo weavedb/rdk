@@ -268,7 +268,7 @@ class VM {
               } else {
                 type ??= "warp"
                 let initialState = {
-                  version: this.conf.weavedb_version ?? "0.41.0",
+                  version: this.conf.weavedb_version ?? "0.42.1",
                   canEvolve: true,
                   evolve: null,
                   secure: _db.secure ?? this.conf.secure,
@@ -295,6 +295,7 @@ class VM {
                     locked: {},
                     allocated: {},
                   },
+                  bridges: ["ethereum"],
                 }
                 const _arweave = this.conf.arweave ?? {
                   host: "arweave.net",
