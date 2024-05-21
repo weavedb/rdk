@@ -2,8 +2,6 @@ const { cpSync, rmSync } = require("fs")
 const Warp = require("weavedb-sdk-node")
 const path = require("path")
 const { map, sortBy, prop, path: _path, isNil, keys } = require("ramda")
-const pako = require("pako")
-const md5 = require("md5")
 const Snapshot = require("./lib/snapshot")
 class Syncer {
   constructor({

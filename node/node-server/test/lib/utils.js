@@ -24,7 +24,7 @@ class Deploy {
     )
     const initState = JSON.stringify({
       ...state,
-      ...{ owner: this.wallet.address },
+      ...{ owner: this.wallet.address, bridges: ["ethereum"] },
     })
     return await this.warp.createContract.deploy({
       wallet: this.wallet,
@@ -90,7 +90,7 @@ class Test {
     this.bundler = bundler
     this.secure = secure
     this.weavedb_srcTxId = weavedb_srcTxId
-    this.weavedb_version = weavedb_version ?? "0.40.0"
+    this.weavedb_version = weavedb_version ?? "0.42.1"
     this.arLocal_started = false
     this.network = network ?? {
       host: "localhost",

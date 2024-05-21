@@ -14300,7 +14300,8 @@
                   amount,
                   to,
                   token,
-                  destination
+                  destination,
+                  date: SmartWeave2.transaction.timestamp
                 },
                 "__bridge__"
               ]
@@ -16428,7 +16429,7 @@
   // sdk/contracts/weavedb-bpt/lib/version.js
   var require_version2 = __commonJS({
     "sdk/contracts/weavedb-bpt/lib/version.js"(exports, module) {
-      module.exports = "0.42.1";
+      module.exports = "0.42.0";
     }
   });
 

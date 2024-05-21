@@ -2,7 +2,6 @@ const { DB: ZKDB } = require("zkjson")
 const { CWAO } = require("cwao")
 const pako = require("pako")
 const fs = require("fs")
-const md5 = require("md5")
 const { cpSync, rmSync } = require("fs")
 const {
   sortBy,
@@ -385,6 +384,7 @@ class Rollup {
               version: "1",
               //skip_validation: true,
             },
+            bridges: ["ethereum"],
           },
         }
         try {
@@ -674,6 +674,7 @@ class Rollup {
           version: "1",
           //skip_validation: true,
         },
+        bridges: ["ethereum"],
       },
       ...this.initial_state,
     }
