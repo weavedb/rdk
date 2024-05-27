@@ -130,7 +130,7 @@ describe("WeaveDB AO with zkJSON", function () {
 
     // get zk merkle tree hash
     const { hash, height } = await cwao.cu.hash(contractTxId)
-    await myru.commit(hash)
+    await myru.commitRoot(hash)
 
     // get zkJSON proof
     const { zkp, col_id, doc } = await cwao.cu.zkjson(

@@ -146,15 +146,16 @@ class VM {
       const auth = { privateKey: this.conf.admin }
       this.admin_db = new SDK({ rollup: admin_db })
       const signer = this.admin.address.toLowerCase()
-      const tx = await this.admin_db.setRules(
-        {
-          "allow write": {
-            "==": [{ var: "request.auth.signer" }, signer],
-          },
-        },
-        "dbs",
-        auth,
-      )
+      const rules = [
+        [
+          "write",
+          [
+            ["=$isAdmin", ["equals", "$signer", signer]],
+            ["allowif()", "$isAdmin"],
+          ],
+        ],
+      ]
+      const tx = await this.admin_db.setRules(rules, "dbs", auth)
       console.log(`__admin__ rules added: ${tx.success}`)
       const rollups = this.conf.rollups || { offchain: {} }
       const dbs = indexBy(prop("id"), await this.admin_db.cget("dbs"))
@@ -268,7 +269,7 @@ class VM {
               } else {
                 type ??= "warp"
                 let initialState = {
-                  version: this.conf.weavedb_version ?? "0.42.1",
+                  version: this.conf.weavedb_version ?? "0.43.1",
                   canEvolve: true,
                   evolve: null,
                   secure: _db.secure ?? this.conf.secure,
