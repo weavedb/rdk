@@ -1,7 +1,6 @@
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
 const { Wallet } = require("ethers")
 const EthCrypto = require("eth-crypto")
-const { toIndex, path } = require("zkjson")
 const { resolve } = require("path")
 const { expect } = require("chai")
 const { wait, Test } = require("../../node/node-server/test/lib/utils")
@@ -332,7 +331,7 @@ describe("WeaveDB AO with zkJSON", function () {
       await wait(5000)
       // get zk merkle tree hash
       const { hash, height } = await wdb.cu.hash(contractTxId)
-      await myru.commit(hash)
+      await myru.commitRoot(hash)
 
       const tk = (await db2.cget("__bridge__"))[0]
 
@@ -350,11 +349,10 @@ describe("WeaveDB AO with zkJSON", function () {
         tk.id,
         "amount",
       )
-
       // bridge token to Ethereum
       const sigs = zkp.slice(8)
-      const _col = sigs[12]
-      const _doc = sigs[13]
+      const _col = sigs[14]
+      const _doc = sigs[15]
 
       await bridge.bridge(_col, _doc, zkp, zkp2)
 
