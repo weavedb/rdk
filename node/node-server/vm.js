@@ -317,6 +317,7 @@ class VM {
                     nostr: "nostr",
                     bundler: "bundler",
                     polygonID: "polygon-id",
+                    jsonschema: "jsonschema",
                   }
                   const cwao = new CWAO({
                     wallet: this.conf.bundler,
@@ -370,6 +371,8 @@ class VM {
                       ethereum: "Awwzwvw7qfc58cKS8cG3NsPdDet957-Bf-S1RcHry0w",
                       bundler: "lry5KMRj6j13sLHsKxs1D2joLjcj6yNHtNQQQoaHRug",
                       nostr: "PDuTzRpn99EwiUvT9XrUhg8nyhW20Wcd-XcRXboCpHs",
+                      polygonID: "Lmu_BUdDuzja4X_egjPeOPdrQH6SQ5HgW7tKUpX37Gc",
+                      jsonschema: "Mu5RtB1v_N6vW2cf0zRhOsIrrpcvSaEW8zeFlHMuVNI",
                     }
                     res = await warp.createContract.deployFromSourceTx({
                       wallet:
