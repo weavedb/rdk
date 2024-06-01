@@ -57,42 +57,58 @@ class Rollup {
         if (is(Function, this.afterInit)) this.afterInit()
       }
     })
-    this.db.send({
-      op: "new",
-      params: {
-        ao,
-        type,
-        snapshot,
-        sequencerUrl,
-        apiKey,
-        arweave,
-        txid,
-        secure,
-        owner,
-        dbname,
-        dir,
-        plugins,
-        tick,
-        admin,
-        initial_state,
-        bundler,
-        contractTxId,
-        rollup,
-      },
-    })
+    try {
+      this.db.send({
+        op: "new",
+        params: {
+          ao,
+          type,
+          snapshot,
+          sequencerUrl,
+          apiKey,
+          arweave,
+          txid,
+          secure,
+          owner,
+          dbname,
+          dir,
+          plugins,
+          tick,
+          admin,
+          initial_state,
+          bundler,
+          contractTxId,
+          rollup,
+        },
+      })
+    } catch (e) {
+      console.log(e)
+    }
   }
   init(afterInit) {
     this.afterInit = afterInit
-    this.db.send({ op: "init" })
+    try {
+      this.db.send({ op: "init" })
+    } catch (e) {
+      console.log(e)
+    }
   }
   execUser(parsed, id) {
     this.cb[id] = parsed.res
     delete parsed.res
-    this.db.send({ op: "execUser", params: parsed, id })
+    try {
+      this.db.send({ op: "execUser", params: parsed, id })
+    } catch (e) {
+      console.log(e)
+    }
   }
   deployContract(contractTxId, id, res, type = "warp", ao) {
     this.cb[id] = res
-    this.db.send({ op: "deploy_contract", contractTxId, id, type, ao })
+    try {
+      this.db.send({ op: "deploy_contract", contractTxId, id, type, ao })
+    } catch (e) {
+      console.log(e)
+    }
   }
   kill() {
     this.db.kill()
@@ -105,6 +121,7 @@ class VM {
     this.conf = conf
     if (!isNil(dbname)) this.conf.dbname = dbname
     // TODO: more prisice validations
+    this.conf.dbname ??= "weavedb"
     if (!isNil(this.bundler)) throw Error("bundler is not defined")
     if (!isNil(this.owner)) throw Error("owner is not defined")
     if (!isNil(this.admin)) throw Error("admin is not defined")
