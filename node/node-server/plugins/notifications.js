@@ -13,6 +13,7 @@ class Notifications {
     this.pdb = new DB({
       type: 3,
       noauth: true,
+      local: true,
       cache: {
         initialize: async obj => {
           obj.lmdb_plg_notifications = open({
@@ -68,12 +69,12 @@ class Notifications {
           viewed: from === to,
         },
         "notifications",
-        id
+        id,
       )
       console.log(
         `<${this.txid}> (${v.id}) [${to.slice(0, 5)}] ${
           article.id
-        } liked by ${from.slice(0, 5)} at ${date}`
+        } liked by ${from.slice(0, 5)} at ${date}`,
       )
     }
     if (func === "set" && col === "follows") {
@@ -91,13 +92,13 @@ class Notifications {
           viewed: from === to,
         },
         "notifications",
-        id
+        id,
       )
       console.log(
         `<${this.txid}> (${v.id}) [${to.slice(0, 5)}] followed by ${from.slice(
           0,
-          5
-        )} at ${date}`
+          5,
+        )} at ${date}`,
       )
     }
     if (func === "add" && col === "posts") {
@@ -123,13 +124,13 @@ class Notifications {
             viewed: from === to,
           },
           "notifications",
-          id
+          id,
         )
         console.log(
           `<${this.txid}> (${v.id}) [${to.slice(
             0,
-            5
-          )}:${_to}] mentioned by ${from.slice(0, 5)} at ${date}`
+            5,
+          )}:${_to}] mentioned by ${from.slice(0, 5)} at ${date}`,
         )
       }
       if (data.repost !== "") {
@@ -153,12 +154,12 @@ class Notifications {
             viewed: from === to,
           },
           "notifications",
-          id
+          id,
         )
         console.log(
           `<${this.txid}> (${v.id}) [${to.slice(0, 5)}] ${
             isNil(data.description) ? "reposted" : "quoted"
-          } by ${from.slice(0, 5)} at ${date}`
+          } by ${from.slice(0, 5)} at ${date}`,
         )
       } else if (data.reply_to !== "") {
         cache.arts[data.reply_to] ??= await this.db.get("posts", data.reply_to)
@@ -181,13 +182,13 @@ class Notifications {
             viewed: from === to,
           },
           "notifications",
-          id
+          id,
         )
         console.log(
           `<${this.txid}> (${v.id}) [${to.slice(0, 5)}] replied by ${from.slice(
             0,
-            5
-          )} at ${date}`
+            5,
+          )} at ${date}`,
         )
       }
     }
