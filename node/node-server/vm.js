@@ -147,7 +147,7 @@ class VM {
       dir: v.dir ?? this.conf.dir,
       plugins: v.plugins ?? this.conf.plugins ?? {},
       tick: v.tick ?? this.conf.tick ?? null,
-      admin: v.admin ?? this.conf.admin,
+      admin: this.conf.admin,
       initial_state: v.initial_state ?? this.conf.initial_state,
       bundler: this.conf.bundler,
       contractTxId: v.contractTxId ?? null,
@@ -511,6 +511,7 @@ class VM {
                 tick: db.tick ?? this.conf.tick ?? null,
                 plugins: db.plugins ?? this.conf.plugins ?? {},
                 bundler: this.conf.bundler,
+                admin: this.conf.admin,
               })
               this.rollups[key].init(() => {
                 if (db.contractTxId) {
