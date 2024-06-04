@@ -216,15 +216,24 @@ class Rollup {
                   action: "bundle",
                   input: signed,
                 })
-                //await this.syncer.cu.result(this.srcTxId, this.contractTxId),
-                results.push({
-                  hash,
-                  height,
-                  tx: tx.result,
-                  items: v,
-                  duration: tx.result.duration,
-                })
-                validity[tx.result.originalTxId] = true
+                console.log("lets get result....")
+
+                const result =
+                  (await this.syncer.cu.result(tx.id, this.contractTxId))
+                    ?.Output ?? null
+                if (!isNil(result)) {
+                  results.push({
+                    hash,
+                    height,
+                    tx: result,
+                    items: v,
+                    duration: result.duration,
+                  })
+                  validity[result.originalTxId] = true
+                } else {
+                  // [TODO] need to handle this
+                  console.log("something went wrong with bundling")
+                }
               }
               this.height = height
               this.last_hash = _hash
