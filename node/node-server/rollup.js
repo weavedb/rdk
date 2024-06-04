@@ -60,6 +60,7 @@ class Rollup {
     ao,
     apiKey,
     txid,
+    srcTxId,
     rollup = false,
     owner,
     secure,
@@ -87,6 +88,7 @@ class Rollup {
     this.count = 0
     this.height = 0
     this.contractTxId = contractTxId
+    this.srcTxId = srcTxId
     this.last_hash = contractTxId
     this.initial_state = initial_state
     this.admin = admin
@@ -214,6 +216,7 @@ class Rollup {
                   action: "bundle",
                   input: signed,
                 })
+                //await this.syncer.cu.result(this.srcTxId, this.contractTxId),
                 results.push({
                   hash,
                   height,
@@ -346,13 +349,18 @@ class Rollup {
       this.full_recovery = full_recovery
       this.full_recovery_failure = full_recovery_failure
     }
-    this.syncer.send({
-      id: this.count,
-      op: "recover",
-      opt: {
-        full: !this.partial_recovery,
-      },
-    })
+    if (this.type === "ao") {
+      // TODO: need implementation
+      console.log("ao is not recoverable at the moment")
+    } else {
+      this.syncer.send({
+        id: this.count,
+        op: "recover",
+        opt: {
+          full: !this.partial_recovery,
+        },
+      })
+    }
   }
 
   async initDB() {
@@ -531,6 +539,10 @@ class Rollup {
 
   async initSyncer() {
     if (this.type === "ao") {
+      if (isNil(this.srcTxId)) {
+        console.log("srcTxId is missing...", this.contractTxId)
+        return
+      }
       this.syncer = new CWAO({
         wallet: this.bundler,
         ...this.ao,
@@ -901,6 +913,7 @@ process.on("message", async msg => {
     rollup.last_hash = msg.contractTxId
     rollup.db.contractTxId = msg.contractTxId
     rollup.rollup = true
+    rollup.srcTxId = msg.srcTxId
     await rollup.initWarp()
     rollup.bundle()
     process.send({ op, id })

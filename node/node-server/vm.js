@@ -28,6 +28,7 @@ const { WarpFactory } = require("warp-contracts")
 class Rollup {
   constructor({
     type,
+    srcTxId,
     txid,
     secure,
     owner,
@@ -64,6 +65,7 @@ class Rollup {
           ao,
           type,
           snapshot,
+          srcTxId,
           sequencerUrl,
           apiKey,
           arweave,
@@ -102,10 +104,17 @@ class Rollup {
       console.log(e)
     }
   }
-  deployContract(contractTxId, id, res, type = "warp", ao) {
+  deployContract(contractTxId, srcTxId, id, res, type = "warp", ao) {
     this.cb[id] = res
     try {
-      this.db.send({ op: "deploy_contract", contractTxId, id, type, ao })
+      this.db.send({
+        op: "deploy_contract",
+        contractTxId,
+        srcTxId,
+        id,
+        type,
+        ao,
+      })
     } catch (e) {
       console.log(e)
     }
@@ -152,6 +161,7 @@ class VM {
       bundler: this.conf.bundler,
       contractTxId: v.contractTxId ?? null,
       rollup: v.rollup ?? false,
+      srcTxId: v.srcTxId,
     })
   }
   async init() {
@@ -286,7 +296,7 @@ class VM {
               } else {
                 type ??= "warp"
                 let initialState = {
-                  version: this.conf.weavedb_version ?? "0.43.2",
+                  version: this.conf.weavedb_version ?? "0.44.2",
                   canEvolve: true,
                   evolve: null,
                   secure: _db.secure ?? this.conf.secure,
@@ -346,7 +356,7 @@ class VM {
                     input: initialState,
                   })
                   const tx = await this.admin_db.update(
-                    { contractTxId: pr.id, type: "ao" },
+                    { contractTxId: pr.id, type: "ao", srcTxId: module },
                     "dbs",
                     key,
                     auth,
@@ -364,6 +374,7 @@ class VM {
                   this.txid_map[pr.id] = key
                   this.rollups[key].deployContract(
                     pr.id,
+                    module,
                     ++this.count,
                     () => {
                       console.log(`AO contract initialized! ${pr.id}`)
@@ -418,7 +429,7 @@ class VM {
                     return
                   } else {
                     const tx = await this.admin_db.update(
-                      { contractTxId: res.contractTxId, type: "warp" },
+                      { contractTxId: res.contractTxId, srcTxId, type: "warp" },
                       "dbs",
                       key,
                       auth,
@@ -433,6 +444,7 @@ class VM {
                     this.txid_map[res.contractTxId] = key
                     this.rollups[key].deployContract(
                       res.contractTxId,
+                      srcTxId,
                       ++this.count,
                       () => {
                         console.log(
