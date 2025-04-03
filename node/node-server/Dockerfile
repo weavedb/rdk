@@ -1,4 +1,4 @@
-FROM amd64/node:18.13.0-alpine
+FROM amd64/node:20-alpine
 
 RUN apk add --no-cache git
 
@@ -6,7 +6,7 @@ COPY ./ /weavedb
 
 WORKDIR /weavedb
 
-RUN yarn
+RUN npm install
 
 EXPOSE 9090
 

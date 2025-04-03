@@ -7,6 +7,12 @@ const { CWAO } = require("cwao")
 const { readFileSync } = require("fs")
 const DB = require("weavedb-node-client")
 const SDK = require("weavedb-sdk-node")
+const { AO } = require("aonote")
+const {
+  setup,
+  ok,
+  fail,
+} = require("../../node/node-server/test/lib/helpers.js")
 
 const getModule = async () =>
   readFileSync(resolve(__dirname, "../../node/node-server/contract.js"))
@@ -24,17 +30,25 @@ async function deploy() {
     verifierDB.address,
     committer.address,
   )
-  return { myru, committer }
+  const MyMRU = await ethers.getContractFactory("MultiOPRU")
+  const mymru = await MyMRU.deploy(
+    verifierRU.address,
+    verifierDB.address,
+    committer.address,
+  )
+  return { mymru, myru, committer }
 }
 
 describe("WeaveDB AO with zkJSON", function () {
-  let myru, committer, db, ru
-  let admin, network, bundler, test, base, arweave
+  let myru, committer, ru, mymru
+  let admin, network, bundler, test, base, arweave, opt
   this.timeout(0)
 
   before(async () => {
+    ;({ opt } = await setup({}))
     // testing in insecure mode, never do that in production
     test = new Test({
+      aos: opt.ao,
       secure: false,
       sequencerUrl: "https://gw.warp.cc/",
       apiKey: "xyz",
@@ -53,20 +67,10 @@ describe("WeaveDB AO with zkJSON", function () {
   beforeEach(async () => {
     const dep = await loadFixture(deploy)
     myru = dep.myru
+    mymru = dep.mymru
     committer = dep.committer
   })
-
   it("should verify rollup transactions", async function () {
-    const cwao = new CWAO({ wallet: bundler, ...base })
-    const sch = await arweave.wallets.jwkToAddress(bundler)
-    expect(await cwao.mu.get()).to.eql("ao messenger unit")
-    expect((await cwao.cu.get()).address).to.eql(sch)
-    expect((await cwao.su.get()).Address).to.eql(sch)
-    expect((await cwao.su.timestamp()).block_height).to.eql(0)
-    const _binary = await getModule()
-    const mod_id = await cwao.deploy(_binary)
-    await cwao.setSU({ url: base.su })
-
     const db = new DB({
       rpc: "localhost:9090",
       contractTxId: "testdb",
@@ -98,12 +102,13 @@ describe("WeaveDB AO with zkJSON", function () {
         op: "deploy_contract",
         key: "testdb",
         type: "ao",
-        module: mod_id,
-        scheduler: sch,
+        module: opt.ao.module,
+        scheduler: opt.ao.scheduler,
       },
       { privateKey: admin.privateKey },
     )
     expect((await db.node({ op: "stats" })).dbs[0].data.rollup).to.eql(true)
+
     await wait(2000)
 
     // update the DB (via node)
@@ -111,7 +116,7 @@ describe("WeaveDB AO with zkJSON", function () {
       rpc: "localhost:9090",
       contractTxId,
     })
-    const Bob = { name: "Bob", age: 10 }
+    const Bob = { name: "Bob" }
     const tx2 = await db2.set(Bob, "ppl", "Bob", {
       privateKey: admin.privateKey,
     })
@@ -120,29 +125,142 @@ describe("WeaveDB AO with zkJSON", function () {
 
     // check rollup
     await wait(5000)
-    expect(
-      await cwao.query({
-        process: contractTxId,
-        action: "get",
-        input: { function: "get", query: ["ppl", "Bob"] },
-      }),
-    ).to.eql(Bob)
-
-    // get zk merkle tree hash
-    const { hash, height } = await cwao.cu.hash(contractTxId)
-    await myru.commitRoot(hash)
-
-    // get zkJSON proof
-    const { zkp, col_id, doc } = await cwao.cu.zkjson(
-      contractTxId,
-      "ppl",
-      "Bob",
-      "name",
+    const ao = new AO(opt.ao)
+    const b = JSON.parse(
+      (
+        await ao.dry({
+          pid: contractTxId,
+          act: "Get",
+          tags: { Query: JSON.stringify(["ppl", "Bob"]) },
+          get: { name: "Result", json: true },
+        })
+      ).out,
     )
+    expect(b).to.eql(Bob)
+
+    // check zkp
+    let hash = null
+    try {
+      hash = (await db.node({ op: "hash", key: "testdb" })).hash
+    } catch (e) {
+      console.log(e)
+    }
+    const { col_id, zkp } = await db.node({
+      op: "zkp",
+      key: "testdb",
+      collection: "ppl",
+      doc: "Bob",
+      path: "name",
+    })
+    expect(hash).to.eql(zkp[21])
+
+    await myru.commitRoot(hash)
 
     // query from Solidity
     expect(
-      await myru.qString([col_id, toIndex(doc), ...path("name")], zkp),
+      await myru.qString([col_id, toIndex("Bob"), ...path("name")], zkp),
     ).to.eql("Bob")
+
+    return
+  })
+  it.only("should verify multi rollup transactions", async function () {
+    const db = new DB({
+      rpc: "localhost:9090",
+      contractTxId: "testdb",
+      arweave: network,
+    })
+    await wait(2000)
+    const stats = await db.node({ op: "stats" })
+    expect(stats).to.eql({ dbs: [] })
+
+    for (const i of [1, 2, 3]) {
+      // add a DB to node
+      const key = "testdb-" + i
+      const doc = "Bob-" + i
+      const tx = await db.admin(
+        {
+          op: "add_db",
+          key,
+          db: {
+            app: "http://localhost:3000",
+            name: "WDB-" + i,
+            rollup: true,
+            owner: admin.address,
+          },
+        },
+        { privateKey: admin.privateKey },
+      )
+      expect(tx.success).to.eql(true)
+
+      // deploy L1 AO contract (via node)
+      const { contractTxId, srcTxId } = await db.admin(
+        {
+          op: "deploy_contract",
+          key,
+          type: "ao",
+          module: opt.ao.module,
+          scheduler: opt.ao.scheduler,
+        },
+        { privateKey: admin.privateKey },
+      )
+      expect((await db.node({ op: "stats" })).dbs[0].data.rollup).to.eql(true)
+
+      await wait(2000)
+
+      // update the DB (via node)
+      const db2 = new DB({
+        rpc: "localhost:9090",
+        contractTxId,
+      })
+      const Bob = { name: doc }
+      const tx2 = await db2.set(Bob, "ppl", doc, {
+        privateKey: admin.privateKey,
+      })
+      expect(tx2.success).to.eql(true)
+      expect(await db2.get("ppl", doc)).to.eql(Bob)
+
+      // check rollup
+      await wait(5000)
+      const ao = new AO(opt.ao)
+      const b = JSON.parse(
+        (
+          await ao.dry({
+            pid: contractTxId,
+            act: "Get",
+            tags: { Query: JSON.stringify(["ppl", doc]) },
+            get: { name: "Result", json: true },
+          })
+        ).out,
+      )
+      expect(b).to.eql(Bob)
+
+      // check zkp
+      let hash = null
+      try {
+        hash = (await db.node({ op: "hash", key })).hash
+      } catch (e) {
+        console.log(e)
+      }
+      const { col_id, zkp } = await db.node({
+        op: "zkp",
+        key,
+        collection: "ppl",
+        doc,
+        path: "name",
+      })
+      expect(hash).to.eql(zkp[21])
+
+      await mymru.commitRoot(contractTxId, hash)
+
+      // query from Solidity
+      expect(
+        await mymru.qString(
+          contractTxId,
+          [col_id, toIndex(doc), ...path("name")],
+          zkp,
+        ),
+      ).to.eql(doc)
+    }
+    return
   })
 })

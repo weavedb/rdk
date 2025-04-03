@@ -20,9 +20,7 @@ class Server {
     this.start()
   }
   start() {
-    this.server.addService(this.weavedb.DB.service, {
-      query: this.query,
-    })
+    this.server.addService(this.weavedb.DB.service, { query: this.query })
     this.server.bindAsync(
       `0.0.0.0:${this.port}`,
       grpc.ServerCredentials.createInsecure(),

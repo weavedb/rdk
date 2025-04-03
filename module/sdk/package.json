@@ -1,0 +1,29 @@
+{
+  "name": "weavedb-lite",
+  "version": "0.1.1",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "module": "dist/src/index.js",
+  "scripts": {
+    "build:cjs": "babel src --out-dir dist/cjs --config-file ./.babelrc-cjs",
+    "build": "rm -rf dist && npm run build:cjs && cp src -rf dist/esm && node make.js && cp .npmignore dist/",
+    "test": "node --experimental-wasm-memory64 --test test/test.js",
+    "test-only": "node --experimental-wasm-memory64 --test-only test/test.js"
+  },
+  "exports": {
+    ".": {
+      "require": "./cjs/index.js",
+      "import": "./esm/index.js"
+    }
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.8",
+    "@babel/core": "^7.25.2",
+    "@babel/plugin-transform-modules-commonjs": "^7.24.8",
+    "@babel/preset-env": "^7.25.3"
+  },
+  "dependencies": {
+    "@permaweb/ao-loader": "^0.0.45",
+    "wao": "^0.7.2"
+  }
+}

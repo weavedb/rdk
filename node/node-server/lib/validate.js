@@ -39,7 +39,34 @@ const validate = async (input, verifyingContract) => {
 
   let signer = null
   let err = null
-  if (type === "rsa256") {
+  if (type === "rsa-pss") {
+    const enc = new TextEncoder()
+    const encoded = enc.encode(JSON.stringify(_data))
+    const binarySignature = new Uint8Array(signature.length / 2)
+    for (let i = 0; i < signature.length; i += 2) {
+      binarySignature[i / 2] = parseInt(signature.substr(i, 2), 16)
+    }
+    const hash = await crypto.subtle.digest("SHA-256", encoded)
+    const publicJWK = { e: "AQAB", ext: true, kty: "RSA", n: pubKey }
+    const cryptoKey = await crypto.subtle.importKey(
+      "jwk",
+      publicJWK,
+      { name: "RSA-PSS", hash: "SHA-256" },
+      false,
+      ["verify"],
+    )
+    const isValid = await crypto.subtle.verify(
+      { name: "RSA-PSS", saltLength: 32 },
+      cryptoKey,
+      binarySignature,
+      hash,
+    )
+    if (isValid) {
+      signer = caller
+    } else {
+      err = true
+    }
+  } else if (type === "rsa256") {
     try {
       let encoded_data = JSON.stringify(_data)
       const enc = new TextEncoder()
@@ -48,7 +75,7 @@ const validate = async (input, verifyingContract) => {
       const isValid = await _crypto.verify(
         pubKey,
         encoded_data,
-        Buffer.from(signature, "hex")
+        Buffer.from(signature, "hex"),
       )
       if (isValid) {
         signer = caller

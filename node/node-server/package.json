@@ -3,10 +3,10 @@
   "version": "0.5.3",
   "main": "server.js",
   "engines": {
-    "node": ">=18.13"
+    "node": ">=20"
   },
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --node-option=experimental-wasm-memory64",
     "codegen": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./static_codegen/ --grpc_out=./static_codegen/ --descriptor_set_out=./static_codegen/descriptor_set.bin --include_imports --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin`  weavedb.proto",
     "dev": "node-dev --respawn server.js",
     "prettier": "prettier *.js --write"
@@ -16,37 +16,30 @@
     "@grpc/grpc-js": "~1.1.8",
     "@grpc/proto-loader": "~0.5.0",
     "@metamask/eth-sig-util": "^5.0.2",
+    "@permaweb/ao-scheduler-utils": "^0.0.24",
     "archiver": "^5.3.1",
     "arweave": "^1.14.4",
     "aws-sdk": "^2.1306.0",
-    "chai": "^4.3.7",
-    "cwao": "^0.5.5",
-    "cwao-units": "^0.7.0",
     "ethers": "^6.8.0",
     "extract-zip": "^2.0.1",
     "google-protobuf": "~3.14.0",
     "grpc-server-reflection": "^0.1.5",
     "lmdb": "^2.8.2",
     "md5": "^2.3.0",
-    "mocha": "^10.2.0",
     "nostr-tools": "^1.16.0",
-    "pako": "^2.1.0",
     "pm2": "^5.3.0",
     "ramda": "^0.28.0",
-    "redis": "^4.6.4",
-    "tweetnacl": "^1.0.3",
-    "warp-arbundles": "^1.0.4",
-    "warp-contracts": "1.4.1",
-    "warp-contracts-plugin-deploy": "1.0.3",
-    "weavedb-node-client": "^0.44.2",
-    "weavedb-offchain": "^0.44.4",
-    "weavedb-sdk-node": "^0.44.3",
-    "weavedb-warp-contracts-plugin-deploy": "^1.0.10",
+    "wao": "^0.7.0",
+    "weavedb-node-client": "^0.45.2",
+    "weavedb-offchain": "^0.45.3",
+    "weavedb-sdk-node": "^0.45.2",
     "ws": "^8.14.2",
     "yargs": "^17.6.2",
-    "zkjson": "^0.3.1"
+    "zkjson": "^0.3.2"
   },
   "devDependencies": {
+    "mocha": "^10.2.0",
+    "chai": "^4.3.7",
     "arlocal": "^1.1.65",
     "node-dev": "^8.0.0",
     "prettier": "2.8.3"

@@ -1,9 +1,13 @@
+const { connect } = require("@permaweb/ao-scheduler-utils")
 const { DB: ZKDB } = require("zkjson")
-const { CWAO } = require("cwao")
-const pako = require("pako")
 const fs = require("fs")
+const { Connected } = require("./connection")
 const { cpSync, rmSync } = require("fs")
 const {
+  uniq,
+  concat,
+  equals,
+  o,
   sortBy,
   mergeLeft,
   prop,
@@ -15,14 +19,14 @@ const {
   map,
   includes,
   path: _path,
+  flatten,
 } = require("ramda")
 const DB = require("weavedb-offchain")
 const { open } = require("lmdb")
 const path = require("path")
 const EthCrypto = require("eth-crypto")
 let arweave = require("arweave")
-const { fork } = require("child_process")
-
+let AO = null
 const getId = async (contractTxId, input, timestamp) => {
   const str = JSON.stringify({
     contractTxId,
@@ -57,7 +61,7 @@ const getNewHash = async (last_hash, current_hash) => {
 class Rollup {
   constructor({
     sequencerUrl,
-    ao,
+    aos,
     apiKey,
     txid,
     srcTxId,
@@ -77,10 +81,18 @@ class Rollup {
     snapshot,
     type = "warp",
   }) {
+    if (aos?.mem) {
+      const { AO: TAO } = require("wao/test")
+      AO = TAO
+    } else {
+      const { AO: MAO } = require("wao")
+      AO = MAO
+    }
+    this.hash = null
     this.snapshot = snapshot
     this.cb = {}
     this.type = type
-    this.ao = ao
+    this.aos = aos
     this.sequencerUrl = sequencerUrl
     this.apiKey = apiKey
     this.arweave = arweave
@@ -126,6 +138,35 @@ class Rollup {
     if (this.rollup) this.bundle()
   }
 
+  async genZKP(col, doc, path, query) {
+    let col_id = this.cols[col]
+    let zkp = null
+    if (isNil(col_id)) return { err: "collection doesn't exist", zkp }
+    let json = null
+    try {
+      json = await this.db.get(col, doc)
+    } catch (e) {
+      console.log(e)
+    }
+    if (!json) return { err: "doc doesn't exist", zkp }
+    if (isNil(json[path])) return { err: "path doesn't exist", zkp }
+    try {
+      const start = Date.now()
+      let params = {
+        json,
+        col_id,
+        path,
+        id: doc,
+      }
+      if (query) params.query = query
+      zkp = await this.zkdb.genProof(params)
+    } catch (e) {
+      console.log(e)
+      return { err: e }
+    }
+    return { err: null, zkp, col_id }
+  }
+
   async measureSizes(bundles, last_hash) {
     let sizes = 0
     let b = [{ bundles: [], t: [], size: 0 }]
@@ -133,8 +174,8 @@ class Rollup {
     for (let v of bundles) {
       if (isNil(v.data?.input)) continue
       const len = JSON.stringify(v.data.input).length
-      const max = this.type === "ao" ? 3500 : 15000
-      if (sizes + len > max) {
+      const max = 15000
+      if (this.type !== "ao" && sizes + len > max) {
         i += 1
         sizes = 0
         b[i] = { bundles: [], t: [], size: 0 }
@@ -171,10 +212,7 @@ class Rollup {
             ["commit", "==", false],
           )
           if (bundling.length > 0) {
-            const b = (await this.measureSizes(bundling, this.last_hash)).slice(
-              0,
-              10,
-            )
+            const b = await this.measureSizes(bundling, this.last_hash)
             this.cb[++this.count] = (
               _err,
               { err, results, success, state },
@@ -188,50 +226,93 @@ class Rollup {
               })
             }
             if (this.type === "ao") {
-              const warp = new DB({
-                type: 3,
-                contractTxId: this.contractTxId,
-              })
               let height = this.height
               let results = []
               let validity = {}
               let _hash = this.last_hash
+              // need fix
               for (let v of b) {
                 const { bundles, hash, t } = v
                 _hash = hash
-                const signed = await warp.sign(
-                  "bundle",
-                  map(_path(["data", "input"]))(bundles),
-                  {
-                    t,
-                    h: hash,
-                    n: ++height,
-                    parallel: true,
-                    nonce: 1,
-                    ar: this.bundler,
-                  },
-                )
-                const tx = await this.syncer.execute({
-                  process: this.contractTxId,
-                  action: "bundle",
-                  input: signed,
+                const diffs = o(flatten, map(_path(["data", "diff"])))(bundles)
+                let _zkp = null
+                if (diffs.length > 0) {
+                  for (const v of diffs) {
+                    let col_id = this.cols[v.collection]
+                    if (isNil(col_id)) {
+                      col_id = await this.zkdb.addCollection()
+                      this.cols[v.collection] = col_id
+                    }
+                    const res = await this.zkdb.insert(col_id, v.doc, v.data)
+                  }
+                  let txs = diffs.map(v => {
+                    const col_id = this.cols[v.collection]
+                    return [col_id, v.doc, v.data]
+                  })
+                  _zkp = this.zkdb.tree.F.toObject(
+                    this.zkdb.tree.root,
+                  ).toString()
+                  console.log("zkp hash:", _zkp)
+                }
+                const txs = map(v => {
+                  return {
+                    id: v.data.txid,
+                    ts: v.data.tx_ts,
+                    input: v.data.input,
+                  }
+                })(bundles)
+                const data = {
+                  diffs: map(v => {
+                    v.data = v.diff
+                    delete v.diff
+                    return v
+                  })(diffs),
+                  txs,
+                  tx_height: last(bundles).id * 1,
+                  block_height: ++height,
+                  hash,
+                  zkdb: _zkp,
+                }
+                console.log("rolling up............................")
+                const { err, mid, res } = await this.syncer.msg({
+                  pid: this.contractTxId,
+                  act: "Rollup",
+                  data,
+                  check: "committed!",
                 })
-                console.log("lets get result....")
-
-                const result =
-                  (await this.syncer.cu.result(tx.id, this.contractTxId))
-                    ?.Output ?? null
-                if (!isNil(result)) {
+                console.log(res.Messages[0])
+                if (!err) {
                   results.push({
                     hash,
                     height,
-                    tx: result,
+                    tx: { originalTxId: mid },
                     items: v,
-                    duration: result.duration,
+                    //duration: result.duration,
                   })
-                  validity[result.originalTxId] = true
+                  validity[mid] = true
+                  this.hash = _zkp
+                } else if (res.Messages[0]) {
+                  results.push({
+                    hash,
+                    height,
+                    tx: { originalTxId: mid },
+                    items: v,
+                    //duration: result.duration,
+                  })
+                  validity[mid] = true
+                  this.hash = _zkp
                 } else {
                   // [TODO] need to handle this
+                  console.log(data)
+                  console.log(err)
+                  console.log(
+                    (
+                      await this.syncer.result({
+                        message: mid,
+                        process: this.contractTxId,
+                      })
+                    ).Messages[0].Tags,
+                  )
                   console.log("something went wrong with bundling")
                 }
               }
@@ -244,12 +325,6 @@ class Rollup {
                 err: null,
                 len: b.length,
                 results,
-              })
-            } else {
-              this.syncer.send({
-                id: this.count,
-                op: "bundle",
-                opt: { height: this.height, b },
               })
             }
           } else {
@@ -266,15 +341,18 @@ class Rollup {
   async bundle() {
     let done = false
     let recovery = false
-    setTimeout(() => {
-      if (!done) {
-        recovery = true
-        console.log("this must be stuck....")
-        this.init_warp = false
-        this.initSyncer()
-        this.bundle()
-      }
-    }, 20000)
+    setTimeout(
+      () => {
+        if (!done) {
+          recovery = true
+          console.log("this must be stuck....")
+          this.init_warp = false
+          this.initSyncer()
+          this.bundle()
+        }
+      },
+      this.aos?.mem ? 2000 : 20000,
+    )
     let { err, success, len, results, state } = await this._bundle()
     done = true
     if (recovery) console.log("this process is aborted!")
@@ -361,19 +439,13 @@ class Rollup {
     if (this.type === "ao") {
       // TODO: need implementation
       console.log("ao is not recoverable at the moment")
-    } else {
-      this.syncer.send({
-        id: this.count,
-        op: "recover",
-        opt: {
-          full: !this.partial_recovery,
-        },
-      })
     }
   }
 
   async initDB() {
-    console.log(`Owner Account: ${this.owner}`)
+    console.log(
+      `[${this.srcTxId}] Owner Account: ${this.owner}.......................................................`,
+    )
     await this.initWAL()
     await this.initOffchain()
     await this.initZKDB()
@@ -381,6 +453,7 @@ class Rollup {
     await this.initPlugins()
   }
 
+  /*
   async recoverWAL() {
     this.recovering = true
     this.cb[++this.count] = async (err, { txs }) => {
@@ -544,7 +617,7 @@ class Rollup {
       op: "txs",
       opt: {},
     })
-  }
+  }*/
 
   async initSyncer() {
     if (this.type === "ao") {
@@ -552,51 +625,49 @@ class Rollup {
         console.log("srcTxId is missing...", this.contractTxId)
         return
       }
-      this.syncer = new CWAO({
-        wallet: this.bundler,
-        ...this.ao,
-      })
-      try {
-        console.log(await this.syncer.cu.get())
-        this.init_warp = true
-      } catch (e) {
-        console.log("CU not responding...", this.contractTxId)
+      this.syncer = await new AO(this.aos).init(this.bundler)
+      // we need recovery here....read tx from SU
+      let res = { error: true }
+      if (this.aos.mem) {
+        res = { edges: [] }
+      } else {
+        let opt = {}
+        if (!isNil(this.aos?.aoconnect?.GATEWAY_URL)) {
+          opt.GRAPHQL_URL = `${this.aos.aoconnect.GATEWAY_URL}/graphql`
+        }
+        const { validate, locate, raw } = connect(opt)
+        let { url, address } = await locate(this.contractTxId)
+        if (url === "http://su") url = "http://localhost:4003"
+        res = fetch(`${url}/${this.contractTxId}`).then(r => r.json())
       }
+      if (res.error) {
+        console.log(res.error)
+      } else {
+        let items = 0
+        for (let v of res?.edges ?? []) {
+          const v2 = v.node
+          try {
+            const json = JSON.parse(v2.message.data)
+            for (const v3 of json?.diffs ?? []) {
+              items++
+              let col_id = this.cols[v3.collection]
+              if (isNil(col_id)) {
+                col_id = await this.zkdb.addCollection()
+                // colnumber not consistent
+                this.cols[v3.collection] = col_id
+              }
+              await this.zkdb.insert(col_id, v3.doc, v3.data)
+            }
+            this.hash = this.zkdb.tree.F.toObject(
+              this.zkdb.tree.root,
+            ).toString()
+          } catch (e) {}
+        }
+        console.log("zkp hash:", this.hash, items, "items recovered")
+        console.log(this.cols)
+      }
+      this.init_warp = true
       return
-    } else {
-      if (!isNil(this.syncer)) this.syncer.kill()
-      this.syncer = fork(path.resolve(__dirname, "warp"))
-      this.syncer.on("message", async ({ err, result, id }) => {
-        if (!isNil(id)) {
-          await this.cb[id]?.(err, result)
-          delete this.cb[id]
-        }
-      })
-      this.cb[++this.count] = err => {
-        if (err) {
-          console.log(`warp unsuccessful... ${this.contractTxId}`)
-        } else {
-          console.log(`warp successfully initialized! ${this.contractTxId}`)
-          if (this.tx_count === 0) {
-            this.recoverWAL()
-          }
-          this.init_warp = true
-        }
-      }
-      this.syncer.send({
-        id: this.count,
-        op: "init",
-        opt: {
-          snapshot: this.snapshot,
-          sequencerUrl: this.sequencerUrl,
-          apiKey: this.apiKey,
-          arweave: this.arweave,
-          contractTxId: this.contractTxId,
-          bundler: this.bundler,
-          dir: this.dir,
-          dir_backup: this.dir_backup,
-        },
-      })
     }
   }
 
@@ -671,19 +742,13 @@ class Rollup {
   }
   async initZKDB() {
     this.zkdb = new ZKDB({
-      level: 100,
-      size_path: 5,
-      size_val: 5,
-      size_json: 256,
-      size_txs: 10,
-      level_col: 8,
       wasmRU: path.resolve(__dirname, "circom/rollup/index_js/index.wasm"),
       zkeyRU: path.resolve(__dirname, "circom/rollup/index_0001.zkey"),
       wasm: path.resolve(__dirname, "circom/db/index_js/index.wasm"),
       zkey: path.resolve(__dirname, "circom/db/index_0001.zkey"),
     })
     await this.zkdb.init()
-    const col_id = await this.zkdb.addCollection()
+    this.cols = {}
   }
   async initOffchain() {
     let state = {
@@ -691,7 +756,13 @@ class Rollup {
         owner: this.owner,
         secure: this.secure ?? true,
         auth: {
-          algorithms: ["secp256k1", "secp256k1-2", "ed25519", "rsa256"],
+          algorithms: [
+            "secp256k1",
+            "secp256k1-2",
+            "ed25519",
+            "rsa256",
+            "rsa-pss",
+          ],
           name: "weavedb",
           version: "1",
           //skip_validation: true,
@@ -719,11 +790,33 @@ class Rollup {
           let diff = []
           for (const k in tx.result.kvs) {
             if (k.split("///")[1]?.split("/")[0] === "data") {
+              let op = "none"
+              let val = null
+              if (isNil(this.kvs[k]) && !isNil(tx.result.kvs[k])) {
+                op = "set"
+                val = tx.result.kvs[k].val
+              } else if (!isNil(this.kvs[k]) && isNil(tx.result.kvs[k])) {
+                op = "delete"
+                val = null
+              } else if (!equals(this.kvs[k].val, tx.result.kvs[k].val)) {
+                op = "update"
+                const v1 = this.kvs[k].val ?? {}
+                const v2 = tx.result.kvs[k].val ?? {}
+                const keys1 = keys(v1)
+                const keys2 = keys(v2)
+                val = {}
+                const keys3 = o(uniq, concat(keys1))(keys2)
+                for (const v of keys3) {
+                  if (v1[v] !== v2[v]) val[v] = v2[v] ?? null
+                }
+              }
               let sps = k.split("///")
               diff.push({
+                op,
                 collection: sps[0],
                 doc: k.split("///")[1]?.split("/")[1],
-                data: tx.result.kvs[k].val,
+                data: tx.result.kvs[k].val ?? null,
+                diff: val,
               })
             }
             this.kvs[k] = tx.result.kvs[k]
@@ -745,32 +838,6 @@ class Rollup {
           }
           this.wal.set(t, "txs", `${t.id}`).then(async res => {
             if (!res.success) console.log("wal error")
-            /*
-              if (diff.length > 0) {
-              if (this.txid === "testdb") {
-                for (const v of diff) {
-                const res = await this.zkdb.insert(0, v.doc, v.data)
-                }
-
-              let txs = diff.map(v => {
-                return [0, v.doc, v.data]
-              })
-              console.log(txs)
-              const start = Date.now()
-              const zkp = await this.zkdb.genRollupProof(txs)
-              console.log("zkp generated...", Date.now() - start)
-              const start2 = Date.now()
-              console.log("this is diff", diff[0].data)
-              const zkp2 = await this.zkdb.genProof({
-                json: diff[0].data,
-                col_id: 0,
-                path: "age",
-                id: "bob",
-              })
-              console.log("zkp generated2...", Date.now() - start2)
-              }
-              
-            }*/
           })
           this.last = Date.now()
           for (let k in this.plugins) {
@@ -902,31 +969,59 @@ class Rollup {
   }
 }
 
-let rollup
-process.on("message", async msg => {
-  const { op, id } = msg
-  if (op === "new") {
-    rollup = new Rollup(msg.params)
-  } else if (op === "init") {
-    await rollup.init()
-    process.send({ err: null, result: null, op, id })
-  } else if (op === "execUser") {
-    rollup.execUser({
-      ...msg.params,
-      res: (err, result) => process.send({ err, result, op, id }),
-    })
-  } else if (op === "deploy_contract") {
-    rollup.type = msg.type
-    rollup.ao = msg.ao
-    rollup.contractTxId = msg.contractTxId
-    rollup.last_hash = msg.contractTxId
-    rollup.db.contractTxId = msg.contractTxId
-    rollup.rollup = true
-    rollup.srcTxId = msg.srcTxId
-    await rollup.initWarp()
-    rollup.bundle()
-    process.send({ op, id })
-  } else {
-    process.send({ op, id })
+class RNode {
+  constructor() {
+    this.rollup = null
+    this.funcs = {
+      _: ({ op, id, send }) => send({ op, id }),
+      new: ({ op, id, msg, send }) => {
+        this.rollup = new Rollup(msg.params)
+      },
+      init: async ({ op, id, msg, send }) => {
+        await this.rollup.init()
+        send({ err: null, result: null, op, id })
+      },
+      execUser: async ({ op, id, msg, send }) => {
+        this.rollup.execUser({
+          ...msg.params,
+          res: (err, result) => send({ err, result, op, id }),
+        })
+      },
+      deploy_contract: async ({ msg, send, op, id }) => {
+        this.rollup.type = msg.type
+        this.rollup.ao = msg.ao
+        this.rollup.contractTxId = msg.contractTxId
+        this.rollup.last_hash = msg.contractTxId
+        this.rollup.db.contractTxId = msg.contractTxId
+        this.rollup.rollup = true
+        this.rollup.srcTxId = msg.srcTxId
+        await this.rollup.initWarp()
+        this.rollup.bundle()
+        send({ op, id })
+      },
+      hash: async ({ msg, send, op, id }) => {
+        send({ op, id, result: { hash: this.rollup.hash } })
+      },
+      zkp: async ({ msg, send, op, id }) => {
+        const { err, zkp, col_id } = await this.rollup.genZKP(
+          msg.collection,
+          msg.doc,
+          msg.path,
+          msg.query,
+        )
+        send({
+          op,
+          id,
+          err,
+          result: { zkp, col_id },
+        })
+      },
+    }
   }
-})
+}
+
+const rnode = new RNode()
+
+new Connected({ parent: process, funcs: rnode.funcs })
+
+module.exports = RNode
